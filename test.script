@@ -1,0 +1,4 @@
+help
+info
+execute_script test.script
+show

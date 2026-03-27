@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.3.1' apply false
+}
+
+group = 'com.itmo.prog.lab7'
+version = '1.0'
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'com.fasterxml.jackson.core:jackson-databind:latest.release'
+        implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:latest.release'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:latest.release'
+        implementation 'org.slf4j:slf4j-api:2.0.17'
+        implementation 'ch.qos.logback:logback-classic:latest.release'
+    }
+}

@@ -1,0 +1,16 @@
+plugins {
+    id 'com.gradleup.shadow' version '9.3.1'
+}
+
+group = 'com.itmo.prog.lab7.server'
+version = '1.0'
+
+dependencies {
+    implementation project(':common')
+}
+
+jar {
+    manifest {
+        attributes["Main-Class"] = "Main"
+    }
+}
