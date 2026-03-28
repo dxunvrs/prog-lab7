@@ -1,28 +1,35 @@
 package core;
 
 import commands.*;
-import io.FileManager;
+import io.github.cdimascio.dotenv.Dotenv;
 import network.ConnectionManager;
+import network.DBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
+    private static final Dotenv dotenv = Dotenv.load();
 
     private final CollectionManager collectionManager = new CollectionManager();
-    private final FileManager fileManager = new FileManager();
+    private final DBManager dbManager = new DBManager();
     private final CommandHandler commandHandler = new CommandHandler(collectionManager);
 
-    public void launch(String[] args) {
+    public void launch() {
         try (ConnectionManager connectionManager = new ConnectionManager(1234, commandHandler)) {
-            checkArgs(args);
+            dbManager.connect("localhost", 5432, "studs", dotenv.get("DB_USER"), dotenv.get("DB_PASS"));
+            collectionManager.setDbManager(dbManager);
+            collectionManager.initCollection();
             registerAllCommands();
-            registerShutdownHook();
             startConsoleThread(connectionManager);
             connectionManager.start();
+        } catch (SQLException e) {
+            logger.error("Ошибка БД", e);
+            System.out.println("Ошибка БД: " + e.getMessage());
         } catch (IOException e) {
             logger.error("Ошибка", e);
             System.out.println("Ошибка: " + e.getMessage());
@@ -35,41 +42,16 @@ public class Server {
             while (!Thread.currentThread().isInterrupted()) {
                 if (scanner.hasNextLine()) {
                     String line = scanner.nextLine().trim();
-                    if (line.equals("save")) {
-                        synchronized (collectionManager) {
-                            fileManager.save(collectionManager);
-                        }
-                    } else if (line.equals("exit")) {
+                    if (line.equals("exit")) {
                         connectionManager.stop();
                     } else {
-                        System.out.println("Сервер поддерживает только команды: save, exit");
+                        System.out.println("Сервер поддерживает только exit");
                     }
                 }
             }
         });
         consoleThread.setDaemon(true); // Чтобы поток не мешал закрытию программы
         consoleThread.start();
-    }
-
-    private void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\nСохранение коллекции");
-            synchronized (collectionManager) {
-                fileManager.save(collectionManager);
-            }
-            logger.info("Завершение работы сервера");
-            System.out.println("Завершение работы...");
-        }));
-    }
-
-    private void checkArgs(String[] args) {
-        if (args.length == 0) {
-            System.out.println("Имя файла не указано, создана новая коллекция");
-        } else {
-            if (args.length > 1) System.out.println("Указано больше одного аргумента, в качестве имени файла взят первый");
-            fileManager.setFileName(args[0]);
-            fileManager.load(collectionManager);
-        }
     }
 
     private void registerAllCommands() {

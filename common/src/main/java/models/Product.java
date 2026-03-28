@@ -36,6 +36,12 @@ public class Product implements Comparable<Product> {
         this.owner = owner;
     }
 
+    public Product(int id, String name, Coordinates coordinates, Date creationDate, int price, UnitOfMeasure unitOfMeasure, Person owner) {
+        this(name, coordinates, price, unitOfMeasure, owner);
+        this.id = id;
+        this.creationDate = creationDate;
+    }
+
     public Integer getId() {
         return id;
     }

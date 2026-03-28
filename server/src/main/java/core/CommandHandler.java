@@ -3,6 +3,7 @@ package core;
 import commands.Command;
 import commands.CommandDef;
 import commands.Inject;
+import exceptions.CommandExecutionException;
 import exceptions.IdNotFoundException;
 import network.Request;
 import network.Response;
@@ -48,7 +49,7 @@ public class CommandHandler {
         }
         try {
             return command.execute(request);
-        } catch (IdNotFoundException e) {
+        } catch (IdNotFoundException | CommandExecutionException e) {
             return handleError(e.getMessage(), e);
         } catch (Exception e) {
             return handleError("Неизвестная ошибка", e);
