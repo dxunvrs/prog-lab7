@@ -8,8 +8,13 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Request {
-    private String commandName;
     private RequestType type;
+
+    private String username;
+    private String password;
+    private String commandName;
+
+    private String token;
 
     private final List<String> stringArgs = new ArrayList<>();
     private final List<Integer> intArgs = new ArrayList<>();
@@ -17,9 +22,28 @@ public class Request {
 
     public Request() {}
 
-    public Request(RequestType type, String commandName) {
+    public Request(RequestType type) {
         this.type = type;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setCommandName(String commandName) {
         this.commandName = commandName;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
     }
 
     public String getCommandName() {
@@ -28,6 +52,14 @@ public class Request {
 
     public RequestType getType() {
         return type;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public void addStringArg(String value) {

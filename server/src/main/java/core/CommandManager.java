@@ -1,8 +1,6 @@
 package core;
 
-import commands.Command;
-import commands.CommandDef;
-import commands.Inject;
+import commands.*;
 import exceptions.CommandExecutionException;
 import exceptions.IdNotFoundException;
 import network.Request;
@@ -15,32 +13,19 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(CommandHandler.class);
+public class CommandManager {
+    private static final Logger logger = LoggerFactory.getLogger(CommandManager.class);
 
     private final Map<String, Command> commands = new HashMap<>();
 
     private final CollectionManager collectionManager;
 
-    public CommandHandler(CollectionManager collectionManager) {
+    public CommandManager(CollectionManager collectionManager) {
         this.collectionManager = collectionManager;
+        registerAllCommands();
     }
 
-    public Response handle(Request request) {
-        switch (request.getType()) {
-            case SYNC -> {
-                return syncCommands();
-            }
-            case SERVER_COMMAND -> {
-                return executeCommand(request);
-            }
-            default -> {
-                return new Response(ResponseType.ERROR, "Неизвестный тип запроса");
-            }
-        }
-    }
-
-    private Response executeCommand(Request request) {
+    public Response executeCommand(Request request) {
         Command command = commands.get(request.getCommandName());
         if (command == null) {
             logger.warn("Команда не найдена");
@@ -56,19 +41,19 @@ public class CommandHandler {
         }
     }
 
-    private Response syncCommands() {
+    private Response handleError(String message, Exception e) {
+        logger.error(message, e);
+        return new Response(ResponseType.ERROR, e.getMessage());
+    }
+
+    public Response syncCommands() {
         Map<String, CommandDef> commandDefMap = new HashMap<>();
         commands.forEach((name, serverCommand) ->
-            commandDefMap.put(name, new CommandDef(serverCommand.getName(), serverCommand.getDescription(), serverCommand.getExpectedArgs()))
+                commandDefMap.put(name, new CommandDef(serverCommand.getName(), serverCommand.getDescription(), serverCommand.getExpectedArgs()))
         );
         Response response = new Response(ResponseType.SYNC_DATA, "Актуальные команды");
         response.setSyncData(commandDefMap);
         return response;
-    }
-
-    private Response handleError(String message, Exception e) {
-        logger.error(message, e);
-        return new Response(ResponseType.ERROR, e.getMessage());
     }
 
     public void addCommand(Command command) {
@@ -99,8 +84,22 @@ public class CommandHandler {
     private Object resolveDependency(Class<?> type) {
         return switch (type.getSimpleName()) {
             case "CollectionManager" -> collectionManager;
-            case "CommandHandler" -> this;
+            case "CommandManager" -> this;
             default -> null;
         };
+    }
+
+    private void registerAllCommands() {
+        addCommand(new AddCommand());
+        addCommand(new AverageOfPriceCommand());
+        addCommand(new ClearCommand());
+        addCommand(new FilterStartsWithNameCommand());
+        addCommand(new InfoCommand());
+        addCommand(new RemoveCommand());
+        addCommand(new ShowCommand());
+        addCommand(new ShuffleCommand());
+        addCommand(new SortCommand());
+        addCommand(new SumOfPriceCommand());
+        addCommand(new UpdateCommand());
     }
 }

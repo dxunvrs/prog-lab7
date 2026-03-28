@@ -23,6 +23,12 @@ public class CommandManager {
     private InputManager inputManager;
     private ConnectionManager connectionManager;
 
+    private String token;
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public void setInputManager(InputManager inputManager) {
         this.inputManager = inputManager;
     }
@@ -39,7 +45,7 @@ public class CommandManager {
         addCommand(new ExecuteScriptCommand());
 
         logger.debug("Запущена синхронизация команд");
-        Response response = connectionManager.sendAndReceive(new Request(RequestType.SYNC, "get_commands"));
+        Response response = connectionManager.sendAndReceive(new Request(RequestType.SYNC));
         if (response.getType() != ResponseType.SYNC_DATA) {
             System.out.println("Не удалось синхронизировать команды с сервером");
             return;
@@ -69,8 +75,8 @@ public class CommandManager {
 
             if (request == null) return true; // для клиентских команд
 
+            request.setToken(token);
             Response response = connectionManager.sendAndReceive(request);
-            System.out.println("Статус: " + response.getType());
             System.out.println(response.getMessage());
 
             if (response.getType() == ResponseType.OUTDATED) { // если команда больше не поддерживается

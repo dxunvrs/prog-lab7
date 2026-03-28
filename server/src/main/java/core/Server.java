@@ -6,6 +6,7 @@ import network.ConnectionManager;
 import network.DBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utility.AuthService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -15,16 +16,15 @@ public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final Dotenv dotenv = Dotenv.load();
 
-    private final CollectionManager collectionManager = new CollectionManager();
     private final DBManager dbManager = new DBManager();
-    private final CommandHandler commandHandler = new CommandHandler(collectionManager);
+    private final CollectionManager collectionManager = new CollectionManager(dbManager);
+    private final AuthService authService = new AuthService(dbManager);
+    private final RequestHandler requestHandler = new RequestHandler(collectionManager, authService);
 
     public void launch() {
-        try (ConnectionManager connectionManager = new ConnectionManager(1234, commandHandler)) {
+        try (ConnectionManager connectionManager = new ConnectionManager(1234, requestHandler)) {
             dbManager.connect("localhost", 5432, "studs", dotenv.get("DB_USER"), dotenv.get("DB_PASS"));
-            collectionManager.setDbManager(dbManager);
-            collectionManager.initCollection();
-            registerAllCommands();
+            collectionManager.initCollection();;
             startConsoleThread(connectionManager);
             connectionManager.start();
         } catch (SQLException e) {
@@ -52,19 +52,5 @@ public class Server {
         });
         consoleThread.setDaemon(true); // Чтобы поток не мешал закрытию программы
         consoleThread.start();
-    }
-
-    private void registerAllCommands() {
-        commandHandler.addCommand(new AddCommand());
-        commandHandler.addCommand(new AverageOfPriceCommand());
-        commandHandler.addCommand(new ClearCommand());
-        commandHandler.addCommand(new FilterStartsWithNameCommand());
-        commandHandler.addCommand(new InfoCommand());
-        commandHandler.addCommand(new RemoveCommand());
-        commandHandler.addCommand(new ShowCommand());
-        commandHandler.addCommand(new ShuffleCommand());
-        commandHandler.addCommand(new SortCommand());
-        commandHandler.addCommand(new SumOfPriceCommand());
-        commandHandler.addCommand(new UpdateCommand());
     }
 }

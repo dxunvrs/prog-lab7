@@ -22,7 +22,8 @@ public class ServerCommand extends Command {
 
     @Override
     public Request execute(String[] tokens) {
-        Request request = new Request(RequestType.SERVER_COMMAND, getName());
+        Request request = new Request(RequestType.SERVER_COMMAND);
+        request.setCommandName(getName());
         if (tokens.length-1 != getExpectedArgsLength()) {
             throw new InvalidArgumentException("Передано неверное количество элементов, получено: " + (tokens.length-1) + ", ожидалось: " + getExpectedArgsLength());
         }

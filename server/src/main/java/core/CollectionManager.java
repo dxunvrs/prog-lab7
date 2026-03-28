@@ -21,9 +21,9 @@ public class CollectionManager {
     private List<Product> collection;
     private LocalDateTime dateOfInit = LocalDateTime.now();
 
-    private DBManager dbManager;
+    private final DBManager dbManager;
 
-    public void setDbManager(DBManager dbManager) {
+    public CollectionManager(DBManager dbManager) {
         this.dbManager = dbManager;
     }
 

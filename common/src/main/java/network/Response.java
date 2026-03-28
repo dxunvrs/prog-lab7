@@ -10,6 +10,8 @@ public class Response {
     private String message;
     private ResponseType type;
 
+    private String token;
+
     private Map<String, CommandDef> syncData;
 
     public Response() {}
@@ -17,6 +19,10 @@ public class Response {
     public Response(ResponseType type, String message) {
         this.type = type;
         this.message = message;
+    }
+
+    public Response(ResponseType type) {
+        this.type = type;
     }
 
     public String getMessage() {
@@ -31,7 +37,19 @@ public class Response {
         return type;
     }
 
+    public String getToken() {
+        return token;
+    }
+
     public void setSyncData(Map<String, CommandDef> syncData) {
         this.syncData = syncData;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

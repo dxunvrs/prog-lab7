@@ -2,7 +2,7 @@ package network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import core.CommandHandler;
+import core.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,9 +25,9 @@ public class ConnectionManager implements AutoCloseable {
 
     private boolean isWorking = true;
 
-    private final CommandHandler commandHandler;
+    private final RequestHandler commandHandler;
 
-    public ConnectionManager(int port, CommandHandler commandHandler) throws IOException {
+    public ConnectionManager(int port, RequestHandler commandHandler) throws IOException {
         this.commandHandler = commandHandler;
         this.mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 

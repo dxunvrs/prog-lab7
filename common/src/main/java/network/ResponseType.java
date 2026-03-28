@@ -4,5 +4,8 @@ public enum ResponseType {
     SYNC_DATA,
     OUTDATED,
     OK,
-    ERROR
+    ERROR,
+    AUTH_SUCCESS,
+    AUTH_FAILED,
+    AUTH_REQUIRED
 }
