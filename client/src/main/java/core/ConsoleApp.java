@@ -1,6 +1,7 @@
 package core;
 
 import exceptions.EndOfInputException;
+import exceptions.InvalidAuthorizeException;
 import io.InputManager;
 import network.*;
 import org.slf4j.Logger;
@@ -32,51 +33,61 @@ public class ConsoleApp {
         }
     }
 
-    public void interactive() {
-        System.out.println("Ожидание ввода команды, для списка доступных команд - help");
+    public void start() {
+        System.out.println("Чтобы авторизоваться/зарегистрироваться введите login/register или exit для выхода");
         while (isWorking) {
             try {
-                String line = inputManager.readNextLine("> ", true);
-                String formattedLine = line.trim().replaceAll("\\s+", " ");
-
-                if (inputManager.isScriptMode()) System.out.println(formattedLine); // для режима скрипта
-
-                if (formattedLine.isEmpty()) continue;
-
-                if (!commandManager.executeCommand(formattedLine)) {
-                    isWorking = false;
+                if (isAuthorized) {
+                    interactive();
+                } else {
+                    authorize();
                 }
-            } catch (EndOfInputException e) {
-                logger.error("Конец ввода", e);
+            } catch (InvalidAuthorizeException e) {
+                logger.error("Ошибка авторизации", e);
                 System.out.println(e.getMessage());
-                isWorking = false;
+                isAuthorized = false;
             }
         }
     }
 
-    public void authorize() {
-        System.out.println("Чтобы авторизоваться/зарегистрироваться введите login/register или exit для выхода");
-        while (!isAuthorized) {
-            try {
-                String line = inputManager.readNextLine("> ", Set.of("login", "register", "exit"), false);
-                String formattedLine = line.trim().replaceAll("\\s+", " ");
+    private void interactive() {
+        try {
+            String line = inputManager.readNextLine("> ", true);
+            String formattedLine = line.trim().replaceAll("\\s+", " ");
 
-                switch (formattedLine) {
-                    case "login" -> isAuthorized = processLogin();
-                    case "register" -> isAuthorized = processRegister();
-                    case "exit" -> {
-                        System.out.println("Выход из программы");
-                        return;
-                    }
-                    default -> System.out.println("Не поддерживается");
-                }
-            } catch (EndOfInputException e) {
-                logger.error("Конец ввода");
-                System.out.println(e.getMessage());
-                return;
+            if (inputManager.isScriptMode()) System.out.println(formattedLine); // для режима скрипта
+
+            if (formattedLine.isEmpty()) return;
+
+            if (!commandManager.executeCommand(formattedLine)) {
+                isWorking = false;
             }
+        } catch (EndOfInputException e) {
+            logger.error("Конец ввода", e);
+            System.out.println(e.getMessage());
+            isWorking = false;
         }
-        interactive();
+    }
+
+    private void authorize() {
+        try {
+            String line = inputManager.readNextLine("> ", Set.of("login", "register", "exit"), false);
+            String formattedLine = line.trim().replaceAll("\\s+", " ");
+
+            switch (formattedLine) {
+                case "login" -> isAuthorized = processLogin();
+                case "register" -> isAuthorized = processRegister();
+                case "exit" -> {
+                    System.out.println("Выход из программы");
+                    isWorking = false;
+                }
+                default -> System.out.println("Не поддерживается");
+            }
+        } catch (EndOfInputException e) {
+            logger.error("Конец ввода");
+            System.out.println(e.getMessage());
+            isWorking = false;
+        }
     }
 
     private boolean processLogin() {

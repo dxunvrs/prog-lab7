@@ -3,6 +3,7 @@ package core;
 import commands.*;
 import exceptions.EndOfExecutionException;
 import exceptions.InvalidArgumentException;
+import exceptions.InvalidAuthorizeException;
 import exceptions.ScriptExecutionException;
 import io.InputManager;
 import network.*;
@@ -82,6 +83,8 @@ public class CommandManager {
             if (response.getType() == ResponseType.OUTDATED) { // если команда больше не поддерживается
                 syncCommands();
                 return true;
+            } else if (response.getType() == ResponseType.AUTH_REQUIRED) { // нужен вход
+                throw new InvalidAuthorizeException(response.getMessage());
             }
 
             addCommandToHistory(command.getName());

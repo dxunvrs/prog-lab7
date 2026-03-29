@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -17,7 +16,7 @@ public class ShuffleCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
+    public Response execute(CommandContext context) {
         collectionManager.randomSort();
         String responseMessage = "Коллекция перемешана, введите show для просмотра";
         return new Response(ResponseType.OK, responseMessage);

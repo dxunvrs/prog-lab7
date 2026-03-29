@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -16,8 +15,8 @@ public class ClearCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        collectionManager.clearCollection();
+    public Response execute(CommandContext context) {
+        collectionManager.clearCollection(context.getCurrentUserId());
         return new Response(ResponseType.OK, "Коллекция очищена");
     }
 }

@@ -1,6 +1,7 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -25,6 +26,9 @@ public class Product implements Comparable<Product> {
 
     @JsonUnwrapped(prefix = "owner_")
     private Person owner; //Поле не может быть null
+
+    @JsonIgnore
+    private int userId;
 
     public Product() {}
 
@@ -64,6 +68,14 @@ public class Product implements Comparable<Product> {
 
     public Person getOwner() {
         return owner;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public void setId(Integer id) {

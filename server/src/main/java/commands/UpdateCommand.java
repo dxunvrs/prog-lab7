@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -17,9 +16,9 @@ public class UpdateCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        collectionManager.updateProductById(request.getIntArgs().get(0), request.getObjectArgs().get(0));
-        String responseMessage = "Продукт с id=" + request.getIntArgs().get(0) + " обновлен";
+    public Response execute(CommandContext context) {
+        collectionManager.updateProductById(context.getIntArgs().get(0), context.getObjectArgs().get(0), context.getCurrentUserId());
+        String responseMessage = "Продукт с id=" + context.getIntArgs().get(0) + " обновлен";
         return new Response(ResponseType.OK, responseMessage);
     }
 }

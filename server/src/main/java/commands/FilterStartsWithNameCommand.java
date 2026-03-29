@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -17,8 +16,9 @@ public class FilterStartsWithNameCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        String responseMessage = collectionManager.getFormattedCollection(product -> product.getName().startsWith(request.getStringArgs().get(0)));
+    public Response execute(CommandContext context) {
+        String responseMessage = collectionManager.getFormattedCollection(product -> product.getName().startsWith(context.getStringArgs().get(0)),
+                context.getCurrentUserId());
         return new Response(ResponseType.OK, responseMessage);
     }
 }

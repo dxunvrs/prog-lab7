@@ -29,10 +29,10 @@ public class DBManager {
         List<Product> collection = new LinkedList<>();
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                Product product = mapRowToProduct(resultSet);
-                collection.add(product);
-            }
+             while (resultSet.next()) {
+                 Product product = mapRowToProduct(resultSet);
+                 collection.add(product);
+             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при загрузке коллекции", e);
             System.out.println("Ошибка БД: " + e.getMessage());
@@ -40,14 +40,10 @@ public class DBManager {
         return collection;
     }
 
-//    public boolean addProduct(Product product, int userId) {
-//        логика с юзерами
-//    }
-
-    // возвращаем product с назначенными id и creationDate
-    public Product createProduct(Product product) {
-        String sql = "INSERT INTO products (name, x, y, price, unit_of_measure, owner_name, owner_birthday, owner_height) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, creation_date";
+    // возвращаем product с назначенными id, creationDate и userId
+    public Product createProduct(Product product, int userId) {
+        String sql = "INSERT INTO products (name, x, y, price, unit_of_measure, owner_name, owner_birthday, owner_height, user_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, creation_date";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, product.getName());
             statement.setLong(2, product.getCoordinates().x());
@@ -58,10 +54,13 @@ public class DBManager {
             statement.setDate(7, Date.valueOf(product.getOwner().birthday()));
             statement.setLong(8, product.getOwner().height());
 
+            statement.setInt(9, userId);
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     product.setId(resultSet.getInt("id"));
                     product.setCreationDate(resultSet.getDate("creation_date"));
+                    product.setUserId(userId);
                 }
                 logger.info("В БД добавлен продукт {}", product);
                 return product;
@@ -73,9 +72,9 @@ public class DBManager {
         return null;
     }
 
-    public boolean updateProduct(int id, Product product) {
+    public boolean updateProduct(int id, Product product, int userId) {
         String sql = "UPDATE products SET name = ?, x = ?, y = ?, price = ?, unit_of_measure = ?, owner_name = ?, owner_birthday = ?, owner_height = ? " +
-                "WHERE id = ?";
+                "WHERE id = ? AND user_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, product.getName());
             statement.setLong(2, product.getCoordinates().x());
@@ -87,6 +86,7 @@ public class DBManager {
             statement.setLong(8, product.getOwner().height());
 
             statement.setInt(9, id);
+            statement.setInt(10, userId);
 
             if (statement.executeUpdate() > 0) {
                 logger.info("Продукт с id {} обновлен в БД", id);
@@ -99,10 +99,11 @@ public class DBManager {
         return false;
     }
 
-    public boolean deleteProduct(int id) {
-        String sql = "DELETE FROM products WHERE id = ?";
+    public boolean deleteProduct(int id, int userId) {
+        String sql = "DELETE FROM products WHERE id = ? AND user_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
+            statement.setInt(2, userId);
 
             if (statement.executeUpdate() > 0 ) {
                 logger.info("Продукт с id {} удален из БД", id);
@@ -115,9 +116,11 @@ public class DBManager {
         return false;
     }
 
-    public boolean clearProducts() {
-        String sql = "DELETE FROM products";
+    public boolean clearProducts(int userId) {
+        String sql = "DELETE FROM products WHERE user_id = ?";
         try(PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+
             if (statement.executeUpdate() > 0 ) {
                 logger.info("Продукты удалены");
                 return true;
@@ -143,10 +146,14 @@ public class DBManager {
                 .toLocalDate();
         long ownerHeight = resultSet.getLong("owner_height");
 
-        return new Product(
+        int userId = resultSet.getInt("user_id");
+        Product product = new Product(
                 id, name, new Coordinates(x, y), creationDate, price,
                 unitOfMeasure, new Person(ownerName, ownerBirthday, ownerHeight)
         );
+        product.setUserId(userId);
+
+        return product;
     }
 
     // возвращает id зарегистрированного пользователя

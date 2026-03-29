@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -17,8 +16,9 @@ public class SumOfPriceCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        String responseMessage = "Сумма цен всех элементов коллекции: " + collectionManager.getSumOfPrice();
+    public Response execute(CommandContext context) {
+        String responseMessage = "Сумма цен всех элементов коллекции: " +
+                collectionManager.getSumOfPrice(context.getCurrentUserId());
         return new Response(ResponseType.OK, responseMessage);
     }
 }

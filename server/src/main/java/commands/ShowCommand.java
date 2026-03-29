@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -17,8 +16,9 @@ public class ShowCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        String responseMessage = collectionManager.getFormattedCollection(product -> true);
+    public Response execute(CommandContext context) {
+        String responseMessage = collectionManager.getFormattedCollection(product -> true,
+                context.getCurrentUserId());
         return new Response(ResponseType.OK, responseMessage);
     }
 }

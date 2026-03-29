@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -16,8 +15,8 @@ public class AddCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        collectionManager.addProduct(request.getObjectArgs().get(0));
+    public Response execute(CommandContext context) {
+        collectionManager.addProduct(context.getObjectArgs().get(0), context.getCurrentUserId());
         return new Response(ResponseType.OK, "Продукт добавлен");
     }
 }

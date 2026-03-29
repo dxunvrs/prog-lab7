@@ -1,5 +1,6 @@
 package core;
 
+import commands.CommandContext;
 import io.jsonwebtoken.Claims;
 import network.Request;
 import network.Response;
@@ -34,9 +35,8 @@ public class RequestHandler {
                 }
 
                 int userId = claims.get("userId", Integer.class);
-                System.out.println(userId);
 
-                return commandManager.executeCommand(request);
+                return commandManager.executeCommand(new CommandContext(request, userId));
             }
             case LOGIN -> {
                 int userId = authService.login(request.getUsername(), request.getPassword());

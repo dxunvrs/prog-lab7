@@ -1,7 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 
@@ -16,8 +15,9 @@ public class AverageOfPriceCommand extends Command {
     }
 
     @Override
-    public Response execute(Request request) {
-        String responseMessage = String.format("Среднее значение цены для всех элементов коллекции: %.2f", collectionManager.getAvgOfPrice());
+    public Response execute(CommandContext context) {
+        String responseMessage = String.format("Среднее значение цены для всех элементов коллекции: %.2f",
+                collectionManager.getAvgOfPrice(context.getCurrentUserId()));
         return new Response(ResponseType.OK, responseMessage);
     }
 }

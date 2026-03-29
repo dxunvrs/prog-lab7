@@ -24,7 +24,7 @@ public class Server {
     public void launch() {
         try (ConnectionManager connectionManager = new ConnectionManager(1234, requestHandler)) {
             dbManager.connect("localhost", 5432, "studs", dotenv.get("DB_USER"), dotenv.get("DB_PASS"));
-            collectionManager.initCollection();;
+            collectionManager.initCollection();
             startConsoleThread(connectionManager);
             connectionManager.start();
         } catch (SQLException e) {

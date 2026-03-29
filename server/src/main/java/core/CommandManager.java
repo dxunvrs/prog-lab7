@@ -3,7 +3,6 @@ package core;
 import commands.*;
 import exceptions.CommandExecutionException;
 import exceptions.IdNotFoundException;
-import network.Request;
 import network.Response;
 import network.ResponseType;
 import org.slf4j.Logger;
@@ -25,15 +24,15 @@ public class CommandManager {
         registerAllCommands();
     }
 
-    public Response executeCommand(Request request) {
-        Command command = commands.get(request.getCommandName());
+    public Response executeCommand(CommandContext commandContext) {
+        Command command = commands.get(commandContext.getCommandName());
         if (command == null) {
             logger.warn("Команда не найдена");
             System.out.println("Команда не найдена");
             return new Response(ResponseType.OUTDATED, "Данная команда не поддерживается");
         }
         try {
-            return command.execute(request);
+            return command.execute(commandContext);
         } catch (IdNotFoundException | CommandExecutionException e) {
             return handleError(e.getMessage(), e);
         } catch (Exception e) {
