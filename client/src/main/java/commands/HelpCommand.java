@@ -2,7 +2,6 @@ package commands;
 
 import core.CommandManager;
 import exceptions.InvalidArgumentException;
-import network.Request;
 
 public class HelpCommand extends Command {
     @Inject
@@ -13,7 +12,7 @@ public class HelpCommand extends Command {
     }
 
     @Override
-    public Request execute(String[] tokens) {
+    public CommandData execute(String[] tokens) {
         if (tokens.length-1 == 0) {
             System.out.println(commandManager.getFormattedCommandsList());
         } else if (tokens.length-1 == 1) {

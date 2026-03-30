@@ -1,8 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Response;
-import network.ResponseType;
 
 import java.util.List;
 
@@ -16,8 +14,8 @@ public class InfoCommand extends Command {
     }
 
     @Override
-    public Response execute(CommandContext context) {
+    public CommandData execute(CommandContext context) {
         String responseMessage = collectionManager.getCollectionInfo();
-        return new Response(ResponseType.OK, responseMessage);
+        return new CommandData(responseMessage);
     }
 }

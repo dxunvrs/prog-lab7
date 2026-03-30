@@ -31,7 +31,7 @@ public class RequestHandler {
                 Claims claims = jwtProvider.validateToken(request.getToken());
 
                 if (claims == null) {
-                    return new Response(ResponseType.AUTH_REQUIRED, "Пройдите авторизацию снова");
+                    return new Response.Builder().type(ResponseType.AUTH_REQUIRED).message("Пройдите авторизацию снова").build();
                 }
 
                 int userId = claims.get("userId", Integer.class);
@@ -41,23 +41,25 @@ public class RequestHandler {
             case LOGIN -> {
                 int userId = authService.login(request.getUsername(), request.getPassword());
                 if (userId == -1) {
-                    return new Response(ResponseType.AUTH_FAILED, "Ошибка входа");
+                    return new Response.Builder().type(ResponseType.AUTH_FAILED).message("Ошибка входа").build();
                 }
-                Response response = new Response(ResponseType.AUTH_SUCCESS, "Вы успешно вошли");
-                response.setToken(jwtProvider.createToken(request.getUsername(), userId));
-                return response;
+                return new Response.Builder().type(ResponseType.AUTH_SUCCESS)
+                        .message("Вы успешно вошли")
+                        .token(jwtProvider.createToken(request.getUsername(), userId))
+                        .build();
             }
             case REGISTER -> {
                 int userId = authService.register(request.getUsername(), request.getPassword());
                 if (userId == -1) {
-                    return new Response(ResponseType.AUTH_FAILED, "Ошибка регистрации");
+                    return new Response.Builder().type(ResponseType.AUTH_FAILED).message("Ошибка регистрации").build();
                 }
-                Response response = new Response(ResponseType.AUTH_SUCCESS, "Вы успешно зарегистрировались");
-                response.setToken(jwtProvider.createToken(request.getUsername(), userId));
-                return response;
+                return new Response.Builder().type(ResponseType.AUTH_SUCCESS)
+                        .message("Вы успешно зарегистрировались")
+                        .token(jwtProvider.createToken(request.getUsername(), userId))
+                        .build();
             }
             default -> {
-                return new Response(ResponseType.ERROR, "Неизвестный тип запроса");
+                return new Response.Builder().type(ResponseType.ERROR).message("Неизвестный тип запроса").build();
             }
         }
     }

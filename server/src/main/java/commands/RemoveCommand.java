@@ -1,8 +1,6 @@
 package commands;
 
 import core.CollectionManager;
-import network.Response;
-import network.ResponseType;
 
 import java.util.List;
 
@@ -16,9 +14,9 @@ public class RemoveCommand extends Command {
     }
 
     @Override
-    public Response execute(CommandContext context) {
+    public CommandData execute(CommandContext context) {
         collectionManager.removeProductById(context.getIntArgs().get(0), context.getCurrentUserId());
         String responseMessage = "Продукт с id=" + context.getIntArgs().get(0) + " удален";
-        return new Response(ResponseType.OK, responseMessage);
+        return new CommandData(responseMessage);
     }
 }

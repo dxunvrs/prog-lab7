@@ -2,8 +2,6 @@ package commands;
 
 import exceptions.InvalidArgumentException;
 import io.InputManager;
-import network.Request;
-import network.RequestType;
 import utility.ProductForm;
 
 import java.util.List;
@@ -21,9 +19,8 @@ public class ServerCommand extends Command {
     }
 
     @Override
-    public Request execute(String[] tokens) {
-        Request request = new Request(RequestType.SERVER_COMMAND);
-        request.setCommandName(getName());
+    public CommandData execute(String[] tokens) {
+        CommandData commandData = new CommandData();
         if (tokens.length-1 != getExpectedArgsLength()) {
             throw new InvalidArgumentException("Передано неверное количество элементов, получено: " + (tokens.length-1) + ", ожидалось: " + getExpectedArgsLength());
         }
@@ -31,11 +28,11 @@ public class ServerCommand extends Command {
         try {
             for (ArgType argType: expectedArgs) {
                 switch (argType) {
-                    case STR -> request.addStringArg(tokens[index]);
-                    case INT -> request.addIntArg(Integer.parseInt(tokens[index]));
+                    case STR -> commandData.addStringArg(tokens[index]);
+                    case INT -> commandData.addIntArg(Integer.parseInt(tokens[index]));
                     case OBJECT ->  {
                         index--;
-                        request.addObjectArg(new ProductForm(inputManager).getProduct());
+                        commandData.addObjectArg(new ProductForm(inputManager).getProduct());
                     }
                     case NONE -> index--;
                 }
@@ -46,7 +43,7 @@ public class ServerCommand extends Command {
         } catch(IndexOutOfBoundsException e) {
             throw new InvalidArgumentException("Передано неверное количество аргументов, ошибка на " + index + " аргументе");
         }
-        return request;
+        return commandData;
     }
 
     private int getExpectedArgsLength() {

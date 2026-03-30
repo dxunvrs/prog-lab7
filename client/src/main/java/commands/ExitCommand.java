@@ -2,7 +2,6 @@ package commands;
 
 import exceptions.EndOfExecutionException;
 import exceptions.InvalidArgumentException;
-import network.Request;
 
 public class ExitCommand extends Command {
     public ExitCommand() {
@@ -10,7 +9,7 @@ public class ExitCommand extends Command {
     }
 
     @Override
-    public Request execute(String[] tokens) {
+    public CommandData execute(String[] tokens) {
         if (tokens.length != 1) {
             throw new InvalidArgumentException("Получено слишком много аргументов для команды exit");
         }

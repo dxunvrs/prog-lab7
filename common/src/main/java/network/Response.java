@@ -16,13 +16,11 @@ public class Response {
 
     public Response() {}
 
-    public Response(ResponseType type, String message) {
-        this.type = type;
-        this.message = message;
-    }
-
-    public Response(ResponseType type) {
-        this.type = type;
+    private Response(Builder builder) {
+        this.message = builder.message;
+        this.type = builder.type;
+        this.token = builder.token;
+        this.syncData = builder.syncData;
     }
 
     public String getMessage() {
@@ -41,15 +39,36 @@ public class Response {
         return token;
     }
 
-    public void setSyncData(Map<String, CommandDef> syncData) {
-        this.syncData = syncData;
-    }
+    public static class Builder {
+        private String message;
+        private ResponseType type;
 
-    public void setToken(String token) {
-        this.token = token;
-    }
+        private String token;
 
-    public void setMessage(String message) {
-        this.message = message;
+        private Map<String, CommandDef> syncData;
+
+        public Builder message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder type(ResponseType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder token(String token) {
+            this.token = token;
+            return this;
+        }
+
+        public Builder syncData(Map<String, CommandDef> syncData) {
+            this.syncData = syncData;
+            return this;
+        }
+
+        public Response build() {
+            return new Response(this);
+        }
     }
 }

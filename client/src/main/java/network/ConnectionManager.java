@@ -64,7 +64,7 @@ public class ConnectionManager implements AutoCloseable {
                 break;
             }
         }
-        return new Response(ResponseType.ERROR, "Запрос не доставлен");
+        return new Response.Builder().type(ResponseType.ERROR).message("Запрос не доставлен").build();
     }
 
     @Override

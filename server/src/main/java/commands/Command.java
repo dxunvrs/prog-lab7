@@ -1,7 +1,5 @@
 package commands;
 
-import network.Response;
-
 import java.util.List;
 
 public abstract class Command {
@@ -15,7 +13,7 @@ public abstract class Command {
         this.expectedArgs = expectedArgs;
     }
 
-    public abstract Response execute(CommandContext context);
+    public abstract CommandData execute(CommandContext context);
 
     public String getName() {
         return name;

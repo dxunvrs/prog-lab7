@@ -44,7 +44,6 @@ public class ConsoleApp {
                 }
             } catch (InvalidAuthorizeException e) {
                 logger.error("Ошибка авторизации", e);
-                System.out.println(e.getMessage());
                 isAuthorized = false;
             }
         }
@@ -94,9 +93,7 @@ public class ConsoleApp {
         String username = inputManager.readNextLine("Введите имя пользователя: ", false).trim();
         String password = inputManager.readNextLine("Введите пароль: ", false).trim();
 
-        Request request = new Request(RequestType.LOGIN);
-        request.setUsername(username);
-        request.setPassword(password);
+        Request request = new Request.Builder().type(RequestType.LOGIN).username(username).password(password).build();
 
         Response response = connectionManager.sendAndReceive(request);
         System.out.println(response.getMessage());
@@ -118,9 +115,7 @@ public class ConsoleApp {
             return false;
         }
 
-        Request request = new Request(RequestType.REGISTER);
-        request.setUsername(username);
-        request.setPassword(password);
+        Request request = new Request.Builder().type(RequestType.REGISTER).username(username).password(password).build();
 
         Response response = connectionManager.sendAndReceive(request);
         System.out.println(response.getMessage());

@@ -46,7 +46,7 @@ public class CommandManager {
         addCommand(new ExecuteScriptCommand());
 
         logger.debug("Запущена синхронизация команд");
-        Response response = connectionManager.sendAndReceive(new Request(RequestType.SYNC));
+        Response response = connectionManager.sendAndReceive(new Request.Builder().type(RequestType.SYNC).build());
         if (response.getType() != ResponseType.SYNC_DATA) {
             System.out.println("Не удалось синхронизировать команды с сервером");
             return;
@@ -72,11 +72,18 @@ public class CommandManager {
         try {
             logger.debug("Начало выполнения команды {}", command.getName());
 
-            Request request = command.execute(tokens);
+            CommandData commandData = command.execute(tokens);
+            //Request request = command.execute(tokens);
 
-            if (request == null) return true; // для клиентских команд
+            if (commandData == null) return true; // для клиентских команд
 
-            request.setToken(token);
+            Request request = new Request.Builder().type(RequestType.SERVER_COMMAND)
+                            .commandName(command.getName())
+                            .intArgs(commandData.getIntArgs())
+                            .stringArgs(commandData.getStringArgs())
+                            .objectArgs(commandData.getObjectArgs())
+                            .token(token)
+                            .build();
             Response response = connectionManager.sendAndReceive(request);
             System.out.println(response.getMessage());
 

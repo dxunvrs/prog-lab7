@@ -23,7 +23,7 @@ public class Server {
 
     public void launch() {
         try (ConnectionManager connectionManager = new ConnectionManager(1234, requestHandler)) {
-            dbManager.connect("localhost", 5432, "studs", dotenv.get("DB_USER"), dotenv.get("DB_PASS"));
+            dbManager.connect("localhost", 5432, "study", dotenv.get("DB_USER"), dotenv.get("DB_PASS"));
             collectionManager.initCollection();
             startConsoleThread(connectionManager);
             connectionManager.start();

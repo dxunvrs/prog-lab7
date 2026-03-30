@@ -29,10 +29,11 @@ public class CommandManager {
         if (command == null) {
             logger.warn("Команда не найдена");
             System.out.println("Команда не найдена");
-            return new Response(ResponseType.OUTDATED, "Данная команда не поддерживается");
+            return new Response.Builder().type(ResponseType.OUTDATED).message("Данная команда не поддерживается").build();
         }
         try {
-            return command.execute(commandContext);
+            CommandData commandData = command.execute(commandContext);
+            return new Response.Builder().type(ResponseType.OK).message(commandData.message()).build();
         } catch (IdNotFoundException | CommandExecutionException e) {
             return handleError(e.getMessage(), e);
         } catch (Exception e) {
@@ -42,7 +43,7 @@ public class CommandManager {
 
     private Response handleError(String message, Exception e) {
         logger.error(message, e);
-        return new Response(ResponseType.ERROR, e.getMessage());
+        return new Response.Builder().type(ResponseType.ERROR).message(e.getMessage()).build();
     }
 
     public Response syncCommands() {
@@ -50,9 +51,9 @@ public class CommandManager {
         commands.forEach((name, serverCommand) ->
                 commandDefMap.put(name, new CommandDef(serverCommand.getName(), serverCommand.getDescription(), serverCommand.getExpectedArgs()))
         );
-        Response response = new Response(ResponseType.SYNC_DATA, "Актуальные команды");
-        response.setSyncData(commandDefMap);
-        return response;
+        return new Response.Builder().type(ResponseType.SYNC_DATA)
+                .message("Актуальные команды")
+                .syncData(commandDefMap).build();
     }
 
     public void addCommand(Command command) {

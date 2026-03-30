@@ -3,7 +3,6 @@ package commands;
 import exceptions.InvalidArgumentException;
 import io.InputManager;
 import exceptions.ScriptExecutionException;
-import network.Request;
 
 import java.io.IOException;
 
@@ -16,7 +15,7 @@ public class ExecuteScriptCommand extends Command {
     }
 
     @Override
-    public Request execute(String[] tokens) {
+    public CommandData execute(String[] tokens) {
         if (tokens.length != 2) {
             throw new InvalidArgumentException("Ожидался 1 аргумент с именем файла, получено: " + (tokens.length-1));
         }
