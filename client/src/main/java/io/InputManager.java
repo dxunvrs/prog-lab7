@@ -29,7 +29,7 @@ public class InputManager {
 
     private final Deque<ScriptSource> sourceDeque = new ArrayDeque<>();
 
-    public InputManager(Supplier<Set<String>> commandsSupplier) {
+    public void initReaders(Supplier<Set<String>> commandsSupplier) {
         try {
             sourceDeque.push(new ScriptSource(new ConsoleReader(commandsSupplier), null));
         } catch (IOException e) {

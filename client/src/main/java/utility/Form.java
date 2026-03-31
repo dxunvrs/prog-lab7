@@ -1,7 +1,6 @@
 package utility;
 
 import io.InputManager;
-import exceptions.EndOfExecutionException;
 import exceptions.EndOfInputException;
 import exceptions.ScriptExecutionException;
 import exceptions.TypeNotFoundException;
@@ -12,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,7 +39,7 @@ public class Form {
 
             } catch (EndOfInputException e) {
                 if (scriptMode) throw new ScriptExecutionException("Получен конец ввода, ожидались данные типа " + type.getSimpleName());
-                throw new EndOfExecutionException("Конец ввода");
+                throw new EndOfInputException("Конец ввода");
 
             } catch (NumberFormatException e) {
                 handleError("Ожидались данные типа " + type.getSimpleName(), e);

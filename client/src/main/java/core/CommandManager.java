@@ -21,21 +21,18 @@ public class CommandManager {
     private final Map<String, Command> commands = new HashMap<>();
     private final List<String> commandsHistory = new LinkedList<>();
 
-    private InputManager inputManager;
-    private ConnectionManager connectionManager;
+    private final InputManager inputManager;
+    private final ConnectionManager connectionManager;
 
     private String token;
 
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public void setInputManager(InputManager inputManager) {
+    public CommandManager(ConnectionManager connectionManager, InputManager inputManager) {
+        this.connectionManager = connectionManager;
         this.inputManager = inputManager;
     }
 
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public void syncCommands() {
@@ -57,7 +54,7 @@ public class CommandManager {
         logger.info("Команды синхронизированы");
     }
 
-    public boolean executeCommand(String line) {
+    public void executeCommand(String line) {
         String[] tokens = line.split(" ");
         Command command = commands.get(tokens[0]);
         if (command == null) { // если команда не найдена, то попытка синхронизации
@@ -66,16 +63,15 @@ public class CommandManager {
             if (command == null) {
                 logger.warn("Пользователь ввел некорректную команду {}", tokens[0]);
                 System.out.println("Команда " + tokens[0] + " не найдена");
-                return true;
+                return;
             }
         }
         try {
             logger.debug("Начало выполнения команды {}", command.getName());
 
             CommandData commandData = command.execute(tokens);
-            //Request request = command.execute(tokens);
 
-            if (commandData == null) return true; // для клиентских команд
+            if (commandData == null) return; // для клиентских команд
 
             Request request = new Request.Builder().type(RequestType.SERVER_COMMAND)
                             .commandName(command.getName())
@@ -89,28 +85,22 @@ public class CommandManager {
 
             if (response.getType() == ResponseType.OUTDATED) { // если команда больше не поддерживается
                 syncCommands();
-                return true;
+                return;
             } else if (response.getType() == ResponseType.AUTH_REQUIRED) { // нужен вход
                 throw new InvalidAuthorizeException(response.getMessage());
             }
 
             addCommandToHistory(command.getName());
-            return true;
         } catch (InvalidArgumentException e) {
-            return notifyError("Ошибка в аргументах: " + e.getMessage(), e);
+            notifyError("Ошибка в аргументах: " + e.getMessage(), e);
         } catch (ScriptExecutionException e) {
-            return notifyError("Ошибка выполнения скрипта: " + e.getMessage(), e);
-        } catch (EndOfExecutionException e) {
-            logger.info("Завершение программы", e);
-            System.out.println(e.getMessage());
-            return false;
+            notifyError("Ошибка выполнения скрипта: " + e.getMessage(), e);
         }
     }
 
-    private boolean notifyError(String message, Exception e) {
+    private void notifyError(String message, Exception e) {
         logger.error(message, e);
         System.out.println(message);
-        return true;
     }
 
     private void addCommandToHistory(String commandName) {
