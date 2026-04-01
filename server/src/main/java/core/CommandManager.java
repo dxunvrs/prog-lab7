@@ -28,7 +28,6 @@ public class CommandManager {
         Command command = commands.get(commandContext.getCommandName());
         if (command == null) {
             logger.warn("Команда не найдена");
-            System.out.println("Команда не найдена");
             return new Response.Builder().type(ResponseType.OUTDATED).message("Данная команда не поддерживается").build();
         }
         try {

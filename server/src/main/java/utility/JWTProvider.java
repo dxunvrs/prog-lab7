@@ -1,5 +1,6 @@
 package utility;
 
+import exceptions.AuthExpiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -21,16 +22,17 @@ public class JWTProvider {
                 .compact();
     }
 
-    public Claims validateToken(String token) {
+    public int validateToken(String token) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            return claims.get("userId", Integer.class);
         } catch (ExpiredJwtException e) {
             System.out.println("Токен протух");
         } catch (SignatureException e) {
-            System.out.println("Подпись не совпадает! Секрет на сервере изменился?");
+            System.out.println("Подпись не совпадает");
         } catch (Exception e) {
             System.out.println("Ошибка валидации: " + e.getMessage());
         }
-        return null;
+        throw new AuthExpiredException("Пройдите авторизацию снова");
     }
 }

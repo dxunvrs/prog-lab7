@@ -1,5 +1,6 @@
 package network;
 
+import exceptions.InvalidAuthorizeException;
 import models.Coordinates;
 import models.Person;
 import models.Product;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,7 +19,21 @@ public class DBManager {
 
     private Connection connection;
 
-    public void connect(String host, int port, String db, String user, String pass) throws SQLException {
+    private final String host;
+    private final int port;
+    private final String db;
+    private final String user;
+    private final String pass;
+
+    public DBManager(String host, int port, String db, String user, String pass) {
+        this.host = host;
+        this.port = port;
+        this.db = db;
+        this.user = user;
+        this.pass = pass;
+    }
+
+    public void connect() throws SQLException {
         String url = String.format("jdbc:postgresql://%s:%d/%s", host, port, db);
         this.connection = DriverManager.getConnection(url, user, pass);
         logger.info("БД подключена");
@@ -35,7 +51,6 @@ public class DBManager {
              }
         } catch (SQLException e) {
             logger.error("Ошибка БД при загрузке коллекции", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
         return collection;
     }
@@ -67,7 +82,6 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при создании продукта", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
         return null;
     }
@@ -94,7 +108,6 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при обновлении продукта", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
         return false;
     }
@@ -111,7 +124,6 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при удалении продукта", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
         return false;
     }
@@ -127,7 +139,6 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при удалении продукта", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
         return false;
     }
@@ -158,7 +169,7 @@ public class DBManager {
 
     // возвращает id зарегистрированного пользователя
     public int registerUser(String username, String hash) {
-        String sql = "INSERT INTO users (username, password_hash) VALUES (?, ?) RETURNING id";
+        String sql = "INSERT INTO users (username, password_hash, date_of_init) VALUES (?, ?, CURRENT_TIMESTAMP) RETURNING id";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username);
             statement.setString(2, hash);
@@ -170,9 +181,8 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при добавлении пользователя", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
-        return -1;
+        throw new InvalidAuthorizeException("Данное имя уже занято");
     }
 
     public String getUserHash(String username) {
@@ -187,9 +197,8 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при авторизации пользователя", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
         }
-        return null;
+        throw new InvalidAuthorizeException("Такого пользователя не существует");
     }
 
     public int getUserId(String username) {
@@ -204,8 +213,39 @@ public class DBManager {
             }
         } catch (SQLException e) {
             logger.error("Ошибка БД при поиске пользователя", e);
-            System.out.println("Ошибка БД: " + e.getMessage());
+        }
+        throw new InvalidAuthorizeException("Такого пользователя не существует");
+    }
+
+    public int getUserProductsCount(int userId) {
+        String sql = "SELECT COUNT(*) as products_count FROM products WHERE user_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("products_count");
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Ошибка БД при получении данных о пользователе", e);
         }
         return -1;
+    }
+
+    public LocalDateTime getUserDateOfInit(int userId) {
+        String sql = "SELECT date_of_init FROM users WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getTimestamp("date_of_init").toLocalDateTime();
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Ошибка БД при получении данных о пользователе", e);
+        }
+        return null;
     }
 }

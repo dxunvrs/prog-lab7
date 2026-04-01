@@ -15,7 +15,7 @@ public class InfoCommand extends Command {
 
     @Override
     public CommandData execute(CommandContext context) {
-        String responseMessage = collectionManager.getCollectionInfo();
+        String responseMessage = collectionManager.getCollectionInfo(context.getCurrentUserId());
         return new CommandData(responseMessage);
     }
 }

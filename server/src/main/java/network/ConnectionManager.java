@@ -1,8 +1,5 @@
 package network;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import core.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,17 +17,10 @@ public class ConnectionManager implements AutoCloseable {
 
     private final DatagramChannel channel;
     private final Selector selector;
-    private final ObjectMapper mapper;
     private final ByteBuffer readBuffer = ByteBuffer.allocate(65535);
 
-    private boolean isWorking = true;
 
-    private final RequestHandler commandHandler;
-
-    public ConnectionManager(int port, RequestHandler commandHandler) throws IOException {
-        this.commandHandler = commandHandler;
-        this.mapper = new ObjectMapper().registerModule(new JavaTimeModule());
-
+    public ConnectionManager(int port) throws IOException {
         selector = Selector.open();
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -38,64 +28,39 @@ public class ConnectionManager implements AutoCloseable {
         channel.register(selector, SelectionKey.OP_READ);
 
         logger.debug("Селектор и канал датаграммы открыты");
-        logger.info("Сервер запущен на порту {}", port);
-        System.out.println("Сервер запущен на порту " + port);
+
     }
 
-    public void start() throws IOException {
-        while (isWorking) {
-            if (selector.select() == 0) continue;
+    public RawUDPRequest receive() throws IOException {
+        if (selector.select() == 0) return null;
 
-            Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-            while (keys.hasNext()) {
-                SelectionKey key = keys.next();
-                keys.remove();
+        Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+        while (keys.hasNext()) {
+            SelectionKey key = keys.next();
+            keys.remove();
 
-                if (!key.isValid()) continue;
+            if (!key.isValid() || !key.isReadable()) continue;
 
-                if (key.isReadable()) {
-                    read(key);
-                }
-            }
-        }
-    }
-
-    private void read(SelectionKey key) {
-        DatagramChannel chan = (DatagramChannel) key.channel();
-        try {
+            DatagramChannel chan = (DatagramChannel) key.channel();
             readBuffer.clear();
             SocketAddress clientAddress = chan.receive(readBuffer);
 
-            if (clientAddress == null) return;
+            if (clientAddress == null) return null;
 
             readBuffer.flip();
-            byte[] data = new byte[readBuffer.remaining()];
-            readBuffer.get(data);
+            byte[] bytes = new byte[readBuffer.remaining()];
+            readBuffer.get(bytes);
 
-            Request request = mapper.readValue(data, Request.class);
-            logger.info("Получен новый запрос от {}, вес: {} байт, сообщение: {}", clientAddress, data.length, new String(data));
-            System.out.println("Новый запрос");
-            System.out.println("От: " + clientAddress);
-            System.out.println("JSON: " + new String(data));
-
-            send(clientAddress, commandHandler.handle(request));
-
-        } catch (IOException e) {
-            logger.error("Ошибка при работе с данными", e);
-            System.out.println("Ошибка при работе с данными: " + e.getMessage());
+            return new RawUDPRequest(clientAddress, bytes);
         }
+        return null;
     }
 
-    private void send(SocketAddress clientAddress, Response response) throws IOException {
-        byte[] data = mapper.writeValueAsBytes(response);
-        ByteBuffer buffer = ByteBuffer.wrap(data);
-
-        channel.send(buffer, clientAddress);
-        logger.info("Отправлен ответ на {}, вес: {} байт, сообщение: {}", clientAddress, data.length, new String(data));
+    public void send(SocketAddress address, byte[] data) throws IOException {
+        channel.send(ByteBuffer.wrap(data), address);
     }
 
-    public void stop() {
-        isWorking = false;
+    public void selectorWakeUp() {
         selector.wakeup();
     }
 

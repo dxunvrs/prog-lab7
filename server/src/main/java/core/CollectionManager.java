@@ -18,7 +18,6 @@ public class CollectionManager {
     private static final Logger logger = LoggerFactory.getLogger(CollectionManager.class);
 
     private List<Product> collection;
-    private LocalDateTime dateOfInit = LocalDateTime.now();
 
     private final DBManager dbManager;
 
@@ -74,10 +73,6 @@ public class CollectionManager {
         logger.info("Коллекция очищена");
     }
 
-    public LocalDateTime getDateOfInit() {
-        return dateOfInit;
-    }
-
     public int getSumOfPrice(int userId) {
         return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).sum();
     }
@@ -96,16 +91,17 @@ public class CollectionManager {
         return result;
     }
 
-    public String getCollectionInfo() {
+    public String getCollectionInfo(int userId) {
+        int size = dbManager.getUserProductsCount(userId);
+        LocalDateTime dateOfInit = dbManager.getUserDateOfInit(userId);
+
+        if (size == -1 || dateOfInit == null) throw new CommandExecutionException("Не удалось получить данные о коллекции");
+
         return """
                 Информация о коллекции:
                   Тип: %s
                   Дата инициализации: %s
                   Количество элементов: %s""".formatted(collection.getClass().getSimpleName(),
-                dateOfInit.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), getCollectionSize());
-    }
-
-    public int getCollectionSize() {
-        return collection.size();
+                dateOfInit.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), size);
     }
 }
