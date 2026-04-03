@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lab_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=roma
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=study
+    ports:
+      - "5430:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roma -d study"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: .
+    container_name: lab7
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "1234:1234/udp"
+    environment:
+      - DB_USER=roma
+      - DB_PASS=admin
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=study
+      - JWT_SECRET=super_secret_string_hello_world_1234567890
+    stdin_open: true
+    tty: true
+
+volumes:
+  pgdata:

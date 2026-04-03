@@ -1,7 +1,5 @@
 logs
 .env
-docker-compose.yml
-dockerfile
 
 .gradle
 build/
