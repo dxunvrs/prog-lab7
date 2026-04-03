@@ -6,9 +6,13 @@ import exceptions.InvalidAuthorizeException;
 import network.Request;
 import network.Response;
 import network.ResponseType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import utility.AuthService;
 
 public class RequestHandler {
+    private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+
     private final CommandManager commandManager;
     private final AuthService authService;
 
@@ -48,8 +52,10 @@ public class RequestHandler {
                 }
             }
         } catch (InvalidAuthorizeException e) {
+            logger.error("Ошибка авторизации", e);
             return new Response.Builder().type(ResponseType.AUTH_FAILED).message(e.getMessage()).build();
         } catch (AuthExpiredException e) {
+            logger.error("Ошибка валидации токена", e);
             return new Response.Builder().type(ResponseType.AUTH_REQUIRED).message(e.getMessage()).build();
         }
     }

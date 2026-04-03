@@ -31,6 +31,7 @@ public class CommandManager {
             return new Response.Builder().type(ResponseType.OUTDATED).message("Данная команда не поддерживается").build();
         }
         try {
+            logger.debug("Выполнение команды {}", command.getName());
             CommandData commandData = command.execute(commandContext);
             return new Response.Builder().type(ResponseType.OK).message(commandData.message()).build();
         } catch (IdNotFoundException | CommandExecutionException e) {

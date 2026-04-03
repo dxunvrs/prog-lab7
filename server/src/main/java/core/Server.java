@@ -1,9 +1,8 @@
 package core;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import commands.*;
 import io.github.cdimascio.dotenv.Dotenv;
+import multithread.RequestExecutor;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,17 +16,14 @@ public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final Dotenv dotenv = Dotenv.load();
 
-    private RequestHandler requestHandler;
+    private RequestExecutor requestExecutor;
 
     private final int port;
 
     private boolean isWorking = true;
 
-    private final ObjectMapper mapper;
-
     public Server(int port) {
         this.port = port;
-        this.mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     public void launch() {
@@ -39,7 +35,9 @@ public class Server {
             CollectionManager collectionManager = new CollectionManager(dbManager);
             AuthService authService = new AuthService(dbManager);
             CommandManager commandManager = new CommandManager(collectionManager);
-            requestHandler = new RequestHandler(commandManager, authService);
+            RequestHandler requestHandler = new RequestHandler(commandManager, authService);
+
+            requestExecutor = new RequestExecutor(connectionManager, requestHandler);
 
             dbManager.connect();
             collectionManager.initCollection();
@@ -62,17 +60,7 @@ public class Server {
                 RawUDPRequest raw = connectionManager.receive();
                 if (raw == null) continue;
 
-                Request request = mapper.readValue(raw.data(), Request.class);
-                logger.info("Получен новый запрос от {}, вес: {} байт, сообщение: {}", raw.address(), raw.data().length, new String(raw.data()));
-                System.out.println("Новый запрос");
-                System.out.println("От: " + raw.address());
-                System.out.println("JSON: " + new String(raw.data()));
-
-                Response response = requestHandler.handle(request);
-
-                byte[] responseBytes = mapper.writeValueAsBytes(response);
-                connectionManager.send(raw.address(), responseBytes);
-                logger.info("Отправлен ответ на {}, вес: {} байт, сообщение: {}", raw.address(), responseBytes.length, new String(responseBytes));
+                requestExecutor.execute(raw);
 
             } catch (IOException e) {
                 logger.error("Ошибка при работе с данными", e);
@@ -87,8 +75,7 @@ public class Server {
                 if (scanner.hasNextLine()) {
                     String line = scanner.nextLine().trim();
                     if (line.equals("exit")) {
-                        isWorking = false;
-                        selectorWakeUpCallback.run();
+                        stop(selectorWakeUpCallback);
                     } else {
                         System.out.println("Сервер поддерживает только exit");
                     }
@@ -97,5 +84,11 @@ public class Server {
         });
         consoleThread.setDaemon(true); // Чтобы поток не мешал закрытию программы
         consoleThread.start();
+    }
+
+    private void stop(Runnable selectorWakeUpCallback) {
+        isWorking = false;
+        selectorWakeUpCallback.run();
+        requestExecutor.shutdown();
     }
 }

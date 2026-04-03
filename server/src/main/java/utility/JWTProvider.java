@@ -2,11 +2,9 @@ package utility;
 
 import exceptions.AuthExpiredException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -26,13 +24,8 @@ public class JWTProvider {
         try {
             Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
             return claims.get("userId", Integer.class);
-        } catch (ExpiredJwtException e) {
-            System.out.println("Токен протух");
-        } catch (SignatureException e) {
-            System.out.println("Подпись не совпадает");
-        } catch (Exception e) {
-            System.out.println("Ошибка валидации: " + e.getMessage());
+        } catch (Exception e){
+            throw new AuthExpiredException("Пройдите авторизацию снова");
         }
-        throw new AuthExpiredException("Пройдите авторизацию снова");
     }
 }

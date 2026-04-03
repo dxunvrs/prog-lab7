@@ -9,11 +9,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CollectionManager {
     private static final Logger logger = LoggerFactory.getLogger(CollectionManager.class);
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     private List<Product> collection;
 
@@ -24,75 +27,130 @@ public class CollectionManager {
     }
 
     public void initCollection() {
-        collection = dbManager.loadCollection();
-        logger.info("Коллекция проинициализирована");
+        lock.lock();
+        try {
+            collection = dbManager.loadCollection();
+            logger.info("Коллекция проинициализирована");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void sort() {
-        Collections.sort(collection);
-        logger.info("Коллекция отсортирована в естественном порядке");
+        lock.lock();
+        try {
+            Collections.sort(collection);
+            logger.info("Коллекция отсортирована в естественном порядке");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void randomSort() {
-        Collections.shuffle(collection);
-        logger.info("Коллекция отсортирована в случайном порядке");
+        lock.lock();
+        try {
+            Collections.shuffle(collection);
+            logger.info("Коллекция отсортирована в случайном порядке");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void addProduct(Product product, int userId) {
         Product newProduct = dbManager.createProduct(product, userId);
         if (newProduct == null) throw new CommandExecutionException("Не удалось добавить продукт");
-        collection.add(newProduct);
-        logger.info("В коллекцию добавлен новый продукт {}", newProduct);
+
+        lock.lock();
+        try {
+            collection.add(newProduct);
+            logger.info("В коллекцию добавлен новый продукт {}", newProduct);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void removeProductById(int id, int userId) {
         if (!dbManager.deleteProduct(id, userId)) throw new IdNotFoundException("Нет такого id");
-        collection.removeIf(product -> product.getId() == id && product.getUserId() == userId);
 
-        logger.info("Из коллекции удален элемент с id {}", id);
+        lock.lock();
+        try {
+            collection.removeIf(product -> product.getId() == id && product.getUserId() == userId);
+            logger.info("Из коллекции удален элемент с id {}", id);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void updateProductById(int id, Product newProduct, int userId) {
         if (!dbManager.updateProduct(id, newProduct, userId)) throw new IdNotFoundException("Нет такого id");
 
-        Product updatedProduct = collection.stream()
-                .filter(product -> product.getId() == id && product.getUserId() == userId)
-                .findFirst()
-                .orElseThrow(() -> new IdNotFoundException("Нет такого id"));
-
-        updatedProduct.update(newProduct);
-        logger.info("Элемент с id {} обновлен, новое значение {}", id, newProduct);
+        lock.lock();
+        try {
+            Product updatedProduct = collection.stream()
+                    .filter(product -> product.getId() == id && product.getUserId() == userId)
+                    .findFirst()
+                    .orElseThrow(() -> new IdNotFoundException("Нет такого id"));
+            updatedProduct.update(newProduct);
+            logger.info("Элемент с id {} обновлен, новое значение {}", id, newProduct);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void clearCollection(int userId) {
         if (!dbManager.clearProducts(userId)) throw new CommandExecutionException("Не удалось очистить коллекцию");
 
-        collection.clear();
-        logger.info("Коллекция очищена");
+        lock.lock();
+        try {
+            collection.clear();
+            logger.info("Коллекция очищена");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getSumOfPrice(int userId) {
-        return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).sum();
+        lock.lock();
+        try {
+            return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).sum();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public double getAvgOfPrice(int userId) {
-        return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).average().orElse(0.0);
+        lock.lock();
+        try {
+            return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).average().orElse(0.0);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public String getFormattedCollection(Predicate<Product> filter) {
-        if (collection.isEmpty()) return "Коллекция пуста";
+        lock.lock();
+        try {
+            if (collection.isEmpty()) return "Коллекция пуста";
 
-        String result = collection.stream()
-                .filter(filter).map(Product::toFormattedString).collect(Collectors.joining("\n"));
+            String result = collection.stream()
+                    .filter(filter).map(Product::toFormattedString).collect(Collectors.joining("\n"));
 
-        if (result.isEmpty()) return "Совпадений не найдено";
-        return result;
+            if (result.isEmpty()) return "Совпадений не найдено";
+            return result;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public String getCollectionInfo() {
-        return """
-                Информация о коллекции:
-                  Тип: %s
-                  Количество элементов: %s""".formatted(collection.getClass().getSimpleName(), collection.size());
+        lock.lock();
+        try {
+            return """
+                    Информация о коллекции:
+                      Тип: %s
+                      Количество элементов: %s""".formatted(collection.getClass().getSimpleName(), collection.size());
+        } finally {
+            lock.unlock();
+        }
     }
 }
