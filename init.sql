@@ -5,8 +5,7 @@ CREATE TYPE unit_of_measures AS ENUM (
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    date_of_init TIMESTAMP NOT NULL
+    password_hash TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS products (

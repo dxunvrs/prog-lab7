@@ -15,8 +15,7 @@ public class FilterStartsWithNameCommand extends Command {
 
     @Override
     public CommandData execute(CommandContext context) {
-        String responseMessage = collectionManager.getFormattedCollection(product -> product.getName().startsWith(context.getStringArgs().get(0)),
-                context.getCurrentUserId());
+        String responseMessage = collectionManager.getFormattedCollection(product -> product.getName().startsWith(context.getStringArgs().get(0)));
         return new CommandData(responseMessage);
     }
 }

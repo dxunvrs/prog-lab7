@@ -15,8 +15,7 @@ public class ShowCommand extends Command {
 
     @Override
     public CommandData execute(CommandContext context) {
-        String responseMessage = collectionManager.getFormattedCollection(product -> true,
-                context.getCurrentUserId());
+        String responseMessage = collectionManager.getFormattedCollection(product -> true);
         return new CommandData(responseMessage);
     }
 }

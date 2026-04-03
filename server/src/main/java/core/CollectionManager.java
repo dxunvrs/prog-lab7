@@ -7,8 +7,6 @@ import network.DBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -81,27 +79,20 @@ public class CollectionManager {
         return collection.stream().filter(product -> product.getUserId() == userId).mapToInt(Product::getPrice).average().orElse(0.0);
     }
 
-    public String getFormattedCollection(Predicate<Product> filter, int userId) {
+    public String getFormattedCollection(Predicate<Product> filter) {
         if (collection.isEmpty()) return "Коллекция пуста";
 
         String result = collection.stream()
-                .filter(filter).filter(product -> product.getUserId() == userId).map(Product::toFormattedString).collect(Collectors.joining("\n"));
+                .filter(filter).map(Product::toFormattedString).collect(Collectors.joining("\n"));
 
         if (result.isEmpty()) return "Совпадений не найдено";
         return result;
     }
 
-    public String getCollectionInfo(int userId) {
-        int size = dbManager.getUserProductsCount(userId);
-        LocalDateTime dateOfInit = dbManager.getUserDateOfInit(userId);
-
-        if (size == -1 || dateOfInit == null) throw new CommandExecutionException("Не удалось получить данные о коллекции");
-
+    public String getCollectionInfo() {
         return """
                 Информация о коллекции:
                   Тип: %s
-                  Дата инициализации: %s
-                  Количество элементов: %s""".formatted(collection.getClass().getSimpleName(),
-                dateOfInit.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), size);
+                  Количество элементов: %s""".formatted(collection.getClass().getSimpleName(), collection.size());
     }
 }
