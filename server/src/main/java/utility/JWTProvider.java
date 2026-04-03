@@ -1,17 +1,20 @@
 package utility;
 
 import exceptions.AuthExpiredException;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 public class JWTProvider {
-    private static final long EXPIRATION_TIME = 60_000*5*10; // 1 минута * 5 * 10
-    private static final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
+
+    private static final long EXPIRATION_TIME = 60_000*5; // 1 минута * 5 * 10
+    private static final SecretKey key = Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
 
     public String createToken(String username, int userId) {
         return Jwts.builder().setSubject(username).claim("userId", userId)

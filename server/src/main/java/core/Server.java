@@ -15,7 +15,7 @@ import java.util.Scanner;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
-    private static final Dotenv dotenv = Dotenv.load();
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
     private RequestExecutor requestExecutor;
 
