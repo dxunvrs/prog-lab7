@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 public class JWTProvider {
-    private static final long EXPIRATION_TIME = 60_000; // 1 минута
+    private static final long EXPIRATION_TIME = 60_000*5*10; // 1 минута * 5 * 10
     private static final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     public String createToken(String username, int userId) {

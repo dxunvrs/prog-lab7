@@ -2,6 +2,7 @@ package core;
 
 import commands.*;
 import io.github.cdimascio.dotenv.Dotenv;
+import multithread.DBConnectionPool;
 import multithread.RequestExecutor;
 import network.*;
 import org.slf4j.Logger;
@@ -20,18 +21,20 @@ public class Server {
 
     private final int port;
 
-    private boolean isWorking = true;
+    private volatile boolean isWorking = true;
 
     public Server(int port) {
         this.port = port;
     }
 
     public void launch() {
-        try (ConnectionManager connectionManager = new ConnectionManager(port)) {
-            DBManager dbManager = new DBManager(
-                    dotenv.get("DB_HOST"), Integer.parseInt(dotenv.get("DB_PORT")), dotenv.get("DB_NAME"),
-                    dotenv.get("DB_USER"), dotenv.get("DB_PASS")
-            );
+        try (ConnectionManager connectionManager = new ConnectionManager(port);
+             DBConnectionPool dbConnectionPool = new DBConnectionPool(
+                     dotenv.get("DB_HOST"), Integer.parseInt(dotenv.get("DB_PORT")), dotenv.get("DB_NAME"),
+                     dotenv.get("DB_USER"), dotenv.get("DB_PASS")
+             )) {
+
+            DBManager dbManager = new DBManager(dbConnectionPool);
             CollectionManager collectionManager = new CollectionManager(dbManager);
             AuthService authService = new AuthService(dbManager);
             CommandManager commandManager = new CommandManager(collectionManager);
@@ -39,7 +42,6 @@ public class Server {
 
             requestExecutor = new RequestExecutor(connectionManager, requestHandler);
 
-            dbManager.connect();
             collectionManager.initCollection();
 
             startConsoleThread(connectionManager::selectorWakeUp);

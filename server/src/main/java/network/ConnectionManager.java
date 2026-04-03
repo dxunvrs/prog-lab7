@@ -19,7 +19,6 @@ public class ConnectionManager implements AutoCloseable {
     private final Selector selector;
     private final ByteBuffer readBuffer = ByteBuffer.allocate(65535);
 
-
     public ConnectionManager(int port) throws IOException {
         selector = Selector.open();
         channel = DatagramChannel.open();
@@ -66,11 +65,12 @@ public class ConnectionManager implements AutoCloseable {
 
     @Override
     public void close() {
+        logger.debug("Закрытие сетевых ресурсов");
         try {
             if (selector != null && channel.isOpen()) selector.close();
             if (channel != null && channel.isOpen()) channel.close();
         } catch (IOException e) {
-            System.out.println("Ошибка при закрытии ресурсов: " + e.getMessage());
+            logger.error("Ошибка при закрытии сетевых ресурсов", e);
         }
     }
 }

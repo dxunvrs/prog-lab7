@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RequestExecutor {
     private static final Logger logger = LoggerFactory.getLogger(RequestExecutor.class);
@@ -39,22 +40,24 @@ public class RequestExecutor {
             return t;
         });
 
+        AtomicInteger workerCount = new AtomicInteger(1);
         this.processPool = new ForkJoinPool(
                 Runtime.getRuntime().availableProcessors(),
                 pool -> {
                     ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-                    worker.setName("Processing-Pool-worker-" + worker.getPoolIndex());
+                    worker.setName("Processing-Pool-worker-" + workerCount.getAndIncrement());
                     return worker;
                 },
                 null,
                 false
         );
 
+        workerCount.set(1);
         this.sendPool = new ForkJoinPool(
                 Runtime.getRuntime().availableProcessors(),
                 pool -> {
                     ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-                    worker.setName("Sending-Pool-worker-" + worker.getPoolIndex());
+                    worker.setName("Sending-Pool-worker-" + workerCount.getAndIncrement());
                     return worker;
                 },
                 null,
