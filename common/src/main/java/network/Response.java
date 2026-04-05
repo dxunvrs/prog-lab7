@@ -14,6 +14,9 @@ public class Response {
 
     private Map<String, CommandDef> syncData;
 
+    private String host;
+    private int port;
+
     public Response() {}
 
     private Response(Builder builder) {
@@ -21,6 +24,8 @@ public class Response {
         this.type = builder.type;
         this.token = builder.token;
         this.syncData = builder.syncData;
+        this.host = builder.host;
+        this.port = builder.port;
     }
 
     public String getMessage() {
@@ -39,6 +44,14 @@ public class Response {
         return token;
     }
 
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
     public static class Builder {
         private String message;
         private ResponseType type;
@@ -46,6 +59,20 @@ public class Response {
         private String token;
 
         private Map<String, CommandDef> syncData;
+
+        private String host;
+        private int port;
+
+        public Builder() {}
+
+        public Builder(Response response) {
+            this.message = response.message;
+            this.type = response.type;
+            this.token = response.token;
+            this.syncData = response.syncData;
+            this.host = response.host;
+            this.port = response.port;
+        }
 
         public Builder message(String message) {
             this.message = message;
@@ -64,6 +91,16 @@ public class Response {
 
         public Builder syncData(Map<String, CommandDef> syncData) {
             this.syncData = syncData;
+            return this;
+        }
+
+        public Builder host(String host) {
+            this.host = host;
+            return this;
+        }
+
+        public Builder port(int port) {
+            this.port = port;
             return this;
         }
 

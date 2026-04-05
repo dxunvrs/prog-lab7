@@ -3,25 +3,34 @@ package core;
 import commands.*;
 import io.github.cdimascio.dotenv.Dotenv;
 import multithread.DBConnectionPool;
-import multithread.RequestExecutor;
+import multithread.threads.ProcessThread;
+import multithread.threads.ReaderThread;
+import multithread.threads.SenderThread;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utility.AuthService;
+import utility.Task;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Scanner;
+import java.util.concurrent.*;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
-    private RequestExecutor requestExecutor;
-
     private final int port;
 
     private volatile boolean isWorking = true;
+
+    private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
+
+    private final ExecutorService readPool = Executors.newFixedThreadPool(10);
+    private final ForkJoinPool processPool = new ForkJoinPool();
+    private final ForkJoinPool sendPool = new ForkJoinPool();
 
     public Server(int port) {
         this.port = port;
@@ -40,11 +49,20 @@ public class Server {
             CommandManager commandManager = new CommandManager(collectionManager);
             RequestHandler requestHandler = new RequestHandler(commandManager, authService);
 
-            requestExecutor = new RequestExecutor(connectionManager, requestHandler);
+            // инициализируем потоки-воркеры
+            for (int i = 0; i < 10; i++) {
+                readPool.execute(new ReaderThread(requestQueue, processQueue));
+            }
+            for (int i = 0; i < 10; i++) {
+                processPool.execute(new ProcessThread(processQueue, responseQueue, requestHandler));
+            }
+            for (int i = 0; i < 10; i++) {
+                sendPool.execute(new SenderThread(responseQueue, connectionManager));
+            }
 
             collectionManager.initCollection();
 
-            startConsoleThread(connectionManager::selectorWakeUp);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> stop(connectionManager::selectorWakeUp)));
 
             runMainLoop(connectionManager);
         } catch (SQLException e) {
@@ -62,35 +80,48 @@ public class Server {
                 RawUDPRequest raw = connectionManager.receive();
                 if (raw == null) continue;
 
-                requestExecutor.execute(raw);
+                requestQueue.put(raw);
 
-            } catch (IOException e) {
+            } catch (InterruptedException e) {
+                logger.error("Не удалось создать задачу чтения", e);
+                isWorking = false;
+                Thread.currentThread().interrupt();
+            }
+            catch (IOException e) {
                 logger.error("Ошибка при работе с данными", e);
             }
         }
     }
 
-    private void startConsoleThread(Runnable selectorWakeUpCallback) {
-        Thread consoleThread = new Thread(() -> {
-            Scanner scanner = new Scanner(System.in);
-            while (!Thread.currentThread().isInterrupted()) {
-                if (scanner.hasNextLine()) {
-                    String line = scanner.nextLine().trim();
-                    if (line.equals("exit")) {
-                        stop(selectorWakeUpCallback);
-                    } else {
-                        System.out.println("Сервер поддерживает только exit");
-                    }
-                }
-            }
-        });
-        consoleThread.setDaemon(true); // Чтобы поток не мешал закрытию программы
-        consoleThread.start();
-    }
-
     private void stop(Runnable selectorWakeUpCallback) {
+        logger.debug("Закрытие сервера");
         isWorking = false;
+
         selectorWakeUpCallback.run();
-        requestExecutor.shutdown();
+
+        readPool.shutdownNow();
+        processPool.shutdown();
+        sendPool.shutdown();
+
+        try {
+            if (!readPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.warn("Пул чтения не успел закрыться, принудительная остановка");
+                readPool.shutdownNow();
+            }
+            if (!processPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.warn("Пул процессов не успел закрыться, принудительная остановка");
+                processPool.shutdownNow();
+            }
+            if (!sendPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.warn("Пул отправки не успел закрыться, принудительная остановка");
+                sendPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            readPool.shutdownNow();
+            processPool.shutdownNow();
+            sendPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        logger.debug("Все пулы потоков закрыты");
     }
 }

@@ -20,22 +20,9 @@ public class DBManager {
 
     private final DBConnectionPool pool;
 
-//    private final String host;
-//    private final int port;
-//    private final String db;
-//    private final String user;
-//    private final String pass;
-
     public DBManager(DBConnectionPool pool) {
         this.pool = pool;
     }
-
-//    public void connect() throws SQLException {
-//        String url = String.format("jdbc:postgresql://%s:%d/%s", host, port, db);
-//        this.connection = DriverManager.getConnection(url, user, pass);
-//        logger.info("БД подключена");
-//        System.out.println("БД подключена");
-//    }
 
     public List<Product> loadCollection() {
         try (PooledConnection pooledConnection = pool.getConnection()) {

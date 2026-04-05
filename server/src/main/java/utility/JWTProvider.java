@@ -13,7 +13,7 @@ import java.util.Date;
 public class JWTProvider {
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
-    private static final long EXPIRATION_TIME = 60_000*5; // 1 минута * 5 * 10
+    private static final long EXPIRATION_TIME = 60_000; // 1 минута
     private static final SecretKey key = Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
 
     public String createToken(String username, int userId) {

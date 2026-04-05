@@ -16,14 +16,13 @@ public class DBConnectionPool implements AutoCloseable {
 
     private final BlockingQueue<Connection> pool;
     private final List<Connection> allConnections;
-    private static final int size = 10;
 
     public DBConnectionPool(String host, int port, String db, String user, String pass) throws SQLException {
-        this.pool = new LinkedBlockingQueue<>(size);
-        this.allConnections = new ArrayList<>(size);
+        this.pool = new LinkedBlockingQueue<>(10);
+        this.allConnections = new ArrayList<>(10);
 
         String url = String.format("jdbc:postgresql://%s:%d/%s", host, port, db);
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < 10; i++) {
             Connection connection = DriverManager.getConnection(url, user, pass);
             pool.add(connection);
             allConnections.add(connection);
@@ -38,11 +37,11 @@ public class DBConnectionPool implements AutoCloseable {
     public void releaseConnection(Connection connection) {
         boolean added = pool.offer(connection);
         if (!added) {
-            logger.warn("Очередь переполнена");
+            logger.warn("Очередь соединений к БД переполнена");
             try {
                 connection.close();
             } catch (SQLException e) {
-                logger.error("Ошибка соединения БД", e);
+                logger.error("Ошибка при закрытии соединения");
             }
         }
     }
