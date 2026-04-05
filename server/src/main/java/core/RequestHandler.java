@@ -8,7 +8,7 @@ import network.Response;
 import network.ResponseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utility.AuthService;
+import auth.AuthService;
 
 public class RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);

@@ -1,12 +1,11 @@
-package network;
+package db;
 
+import exceptions.DBExecuteException;
 import exceptions.InvalidAuthorizeException;
 import models.Coordinates;
 import models.Person;
 import models.Product;
 import models.UnitOfMeasure;
-import multithread.DBConnectionPool;
-import multithread.PooledConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public class DBManager {
             }
             return collection;
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
             return new LinkedList<>();
         }
     }
@@ -78,14 +77,19 @@ public class DBManager {
                 logger.error("Ошибка БД при создании продукта", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
         return null;
     }
 
-    public boolean updateProduct(int id, Product product, int userId) {
+    public void updateProduct(int id, Product product, int userId) throws DBExecuteException {
         try (PooledConnection pooledConnection = pool.getConnection()) {
             Connection connection = pooledConnection.getConnection();
+
+            int actualUserId = getUserIdByProductId(id);
+            if (actualUserId != userId) {
+                throw new DBExecuteException("Недостаточно прав");
+            }
 
             String sql = "UPDATE products SET name = ?, x = ?, y = ?, price = ?, unit_of_measure = ?, owner_name = ?, owner_birthday = ?, owner_height = ? " +
                     "WHERE id = ? AND user_id = ?";
@@ -104,20 +108,23 @@ public class DBManager {
 
                 if (statement.executeUpdate() > 0) {
                     logger.info("Продукт с id {} обновлен в БД", id);
-                    return true;
                 }
             } catch (SQLException e) {
                 logger.error("Ошибка БД при обновлении продукта", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
-        return false;
     }
 
-    public boolean deleteProduct(int id, int userId) {
+    public void deleteProduct(int id, int userId) throws DBExecuteException {
         try (PooledConnection pooledConnection = pool.getConnection()) {
             Connection connection = pooledConnection.getConnection();
+
+            int actualUserId = getUserIdByProductId(id);
+            if (actualUserId != userId) {
+                throw new DBExecuteException("Недостаточно прав");
+            }
 
             String sql = "DELETE FROM products WHERE id = ? AND user_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -126,15 +133,35 @@ public class DBManager {
 
                 if (statement.executeUpdate() > 0) {
                     logger.info("Продукт с id {} удален из БД", id);
-                    return true;
                 }
             } catch (SQLException e) {
                 logger.error("Ошибка БД при удалении продукта", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
-        return false;
+    }
+
+    private int getUserIdByProductId(int id) throws DBExecuteException {
+        try (PooledConnection pooledConnection = pool.getConnection()) {
+            Connection connection = pooledConnection.getConnection();
+
+            String sql = "SELECT user_id FROM products WHERE id = ?";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, id);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (!resultSet.next()) {
+                        throw new DBExecuteException("Нет такого id");
+                    }
+                    return resultSet.getInt("user_id");
+                }
+            } catch (SQLException e) {
+                logger.error("Ошибка при получении данных о продукте");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        throw new DBExecuteException("Неизвестная ошибка");
     }
 
     public boolean clearProducts(int userId) {
@@ -153,7 +180,7 @@ public class DBManager {
                 logger.error("Ошибка БД при удалении продукта", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
         return false;
     }
@@ -201,7 +228,7 @@ public class DBManager {
                 logger.error("Ошибка БД при добавлении пользователя", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
         throw new InvalidAuthorizeException("Данное имя уже занято");
     }
@@ -223,7 +250,7 @@ public class DBManager {
                 logger.error("Ошибка БД при авторизации пользователя", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
         throw new InvalidAuthorizeException("Такого пользователя не существует");
     }
@@ -245,7 +272,7 @@ public class DBManager {
                 logger.error("Ошибка БД при поиске пользователя", e);
             }
         } catch (InterruptedException e) {
-            logger.error("Ошибка получения соединения", e);
+            Thread.currentThread().interrupt();
         }
         throw new InvalidAuthorizeException("Такого пользователя не существует");
     }

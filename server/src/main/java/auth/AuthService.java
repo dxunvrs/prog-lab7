@@ -1,7 +1,7 @@
-package utility;
+package auth;
 
 import exceptions.InvalidAuthorizeException;
-import network.DBManager;
+import db.DBManager;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

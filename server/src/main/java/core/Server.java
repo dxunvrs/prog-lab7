@@ -1,15 +1,15 @@
 package core;
 
-import commands.*;
+import db.DBManager;
 import io.github.cdimascio.dotenv.Dotenv;
-import multithread.DBConnectionPool;
-import multithread.threads.ProcessThread;
-import multithread.threads.ReaderThread;
-import multithread.threads.SenderThread;
+import db.DBConnectionPool;
+import multithread.ProcessThread;
+import multithread.ReaderThread;
+import multithread.SenderThread;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utility.AuthService;
+import auth.AuthService;
 import utility.Task;
 
 import java.io.IOException;

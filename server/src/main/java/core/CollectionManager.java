@@ -1,9 +1,10 @@
 package core;
 
 import exceptions.CommandExecutionException;
+import exceptions.DBExecuteException;
 import exceptions.IdNotFoundException;
 import models.Product;
-import network.DBManager;
+import db.DBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,11 @@ public class CollectionManager {
     }
 
     public void removeProductById(int id, int userId) {
-        if (!dbManager.deleteProduct(id, userId)) throw new IdNotFoundException("Нет такого id");
+        try {
+            dbManager.deleteProduct(id, userId);
+        } catch (DBExecuteException e) {
+            throw new CommandExecutionException(e.getMessage());
+        }
 
         lock.lock();
         try {
@@ -82,7 +87,11 @@ public class CollectionManager {
     }
 
     public void updateProductById(int id, Product newProduct, int userId) {
-        if (!dbManager.updateProduct(id, newProduct, userId)) throw new IdNotFoundException("Нет такого id");
+        try {
+            dbManager.updateProduct(id, newProduct, userId);
+        } catch (DBExecuteException e) {
+            throw new CommandExecutionException(e.getMessage());
+        }
 
         lock.lock();
         try {

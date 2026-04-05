@@ -1,4 +1,4 @@
-package utility;
+package auth;
 
 import exceptions.AuthExpiredException;
 import io.github.cdimascio.dotenv.Dotenv;

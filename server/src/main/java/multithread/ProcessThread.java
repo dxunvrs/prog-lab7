@@ -1,4 +1,4 @@
-package multithread.threads;
+package multithread;
 
 import core.RequestHandler;
 import network.Response;
