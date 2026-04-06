@@ -10,38 +10,46 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import auth.AuthService;
-import utility.Task;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Scanner;
 import java.util.concurrent.*;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
-    private final int port;
+    // private final int port;
+    // private ConnectionManager connectionManager;
+    private TCPConnectionManager connectionManager;
 
     private volatile boolean isWorking = true;
 
-    private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
-    private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
+    // private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
+    // private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
+    // private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
+
+    private final BlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<Request> processQueue = new LinkedBlockingQueue<>(10);
     private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
 
     private final ExecutorService readPool = Executors.newFixedThreadPool(10);
     private final ForkJoinPool processPool = new ForkJoinPool();
     private final ForkJoinPool sendPool = new ForkJoinPool();
 
-    public Server(int port) {
-        this.port = port;
-    }
+//    public Server(int port) {
+//        this.port = port;
+//    }
 
     public void launch() {
-        try (ConnectionManager connectionManager = new ConnectionManager(port);
-             DBConnectionPool dbConnectionPool = new DBConnectionPool(
+        try (DBConnectionPool dbConnectionPool = new DBConnectionPool(
                      dotenv.get("DB_HOST"), Integer.parseInt(dotenv.get("DB_PORT")), dotenv.get("DB_NAME"),
                      dotenv.get("DB_USER"), dotenv.get("DB_PASS")
              )) {
+
+            // connectionManager = new ConnectionManager(port);
+            connectionManager = new TCPConnectionManager("localhost", 8000);
 
             DBManager dbManager = new DBManager(dbConnectionPool);
             CollectionManager collectionManager = new CollectionManager(dbManager);
@@ -62,9 +70,10 @@ public class Server {
 
             collectionManager.initCollection();
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> stop(connectionManager::selectorWakeUp)));
+            startConsoleThread();
+            Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 
-            runMainLoop(connectionManager);
+            runMainLoop();
         } catch (SQLException e) {
             logger.error("Ошибка БД", e);
         } catch (IOException e) {
@@ -72,15 +81,17 @@ public class Server {
         }
     }
 
-    private void runMainLoop(ConnectionManager connectionManager) {
-        System.out.println("Сервер запущен на порту " + port);
+    private void runMainLoop() {
+        // System.out.println("Сервер запущен на порту " + port);
+        logger.info("Сервер запущен");
 
         while (isWorking) {
             try {
-                RawUDPRequest raw = connectionManager.receive();
-                if (raw == null) continue;
+                // RawUDPRequest raw = connectionManager.receive();
+                byte[] data = connectionManager.receive();
+                if (data == null) continue;
 
-                requestQueue.put(raw);
+                requestQueue.put(data);
 
             } catch (InterruptedException e) {
                 logger.error("Не удалось создать задачу чтения", e);
@@ -93,11 +104,30 @@ public class Server {
         }
     }
 
-    private void stop(Runnable selectorWakeUpCallback) {
+    private void startConsoleThread() {
+        Thread consoleThread = new Thread(() -> {
+            Scanner scanner = new Scanner(System.in);
+            while (!Thread.currentThread().isInterrupted()) {
+                if (scanner.hasNextLine()) {
+                    String line = scanner.nextLine().trim();
+                    if (line.equals("exit")) {
+                        System.exit(0);
+                    } else {
+                        System.out.println("Сервер поддерживает только exit");
+                    }
+                }
+            }
+        });
+        consoleThread.setDaemon(true); // Чтобы поток не мешал закрытию программы
+        consoleThread.start();
+    }
+
+    private void stop() {
         logger.debug("Закрытие сервера");
         isWorking = false;
 
-        selectorWakeUpCallback.run();
+        connectionManager.selectorWakeUp();
+        connectionManager.close();
 
         readPool.shutdownNow();
         processPool.shutdown();

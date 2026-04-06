@@ -20,6 +20,9 @@ public class Request {
     private List<Integer> intArgs;
     private List<Product> objectArgs;
 
+    private String host;
+    private int port;
+
     public Request() {}
 
     private Request(Builder builder) {
@@ -31,6 +34,8 @@ public class Request {
         this.stringArgs = builder.stringArgs;
         this.intArgs = builder.intArgs;
         this.objectArgs = builder.objectArgs;
+        this.host = builder.host;
+        this.port = builder.port;
     }
 
     public String getToken() {
@@ -65,6 +70,14 @@ public class Request {
         return objectArgs;
     }
 
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
     public static class Builder {
         private RequestType type;
 
@@ -78,6 +91,24 @@ public class Request {
         private List<String> stringArgs;
         private List<Integer> intArgs;
         private List<Product> objectArgs;
+
+        private String host;
+        private int port;
+
+        public Builder() {}
+
+        public Builder(Request request) {
+            this.type = request.type;
+            this.username = request.username;
+            this.password = request.password;
+            this.commandName = request.commandName;
+            this.token = request.token;
+            this.stringArgs = request.stringArgs;
+            this.intArgs = request.intArgs;
+            this.objectArgs = request.objectArgs;
+            this.host = request.host;
+            this.port = request.port;
+        }
 
         public Builder type(RequestType type) {
             this.type = type;
@@ -116,6 +147,16 @@ public class Request {
 
         public Builder objectArgs(List<Product> objectArgs) {
             this.objectArgs = objectArgs;
+            return this;
+        }
+
+        public Builder host(String host) {
+            this.host = host;
+            return this;
+        }
+
+        public Builder port(int port) {
+            this.port = port;
             return this;
         }
 

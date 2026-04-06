@@ -2,14 +2,13 @@ package multithread;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import network.ConnectionManager;
 import network.Response;
+import network.TCPConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 
 public class SenderThread implements Runnable {
@@ -17,9 +16,15 @@ public class SenderThread implements Runnable {
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private final BlockingQueue<Response> responseQueue;
-    private final ConnectionManager connectionManager;
+    // private final ConnectionManager connectionManager;
+    private final TCPConnectionManager connectionManager;
 
-    public SenderThread(BlockingQueue<Response> responseQueue, ConnectionManager connectionManager) {
+//    public SenderThread(BlockingQueue<Response> responseQueue, ConnectionManager connectionManager) {
+//        this.responseQueue = responseQueue;
+//        this.connectionManager = connectionManager;
+//    }
+
+    public SenderThread(BlockingQueue<Response> responseQueue, TCPConnectionManager connectionManager) {
         this.responseQueue = responseQueue;
         this.connectionManager = connectionManager;
     }
@@ -31,9 +36,17 @@ public class SenderThread implements Runnable {
                 Response response = responseQueue.take();
                 logger.debug("Поток {} берет задачу отправки из очереди", Thread.currentThread().getName());
                 byte[] responseBytes = mapper.writeValueAsBytes(response);
-                SocketAddress address = new InetSocketAddress(response.getHost(), response.getPort());
-                connectionManager.send(address, responseBytes);
-                logger.info("Отправлен ответ на {}, вес: {} байт, сообщение: {}", address, responseBytes.length, new String(responseBytes));
+
+                ByteBuffer buffer = ByteBuffer.allocate(4 + responseBytes.length);
+                buffer.putInt(responseBytes.length);
+                buffer.put(responseBytes);
+                buffer.flip();
+
+
+//                SocketAddress address = new InetSocketAddress(response.getHost(), response.getPort());
+//                connectionManager.send(address, responseBytes);
+                connectionManager.send(buffer);
+                logger.info("Отправлен ответ, вес: {} байт, сообщение: {}", responseBytes.length, new String(responseBytes));
             } catch (IOException e) {
                 logger.error("Ошибка отправки", e);
             } catch (InterruptedException e) {

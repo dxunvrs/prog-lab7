@@ -1,6 +1,7 @@
 package multithread;
 
 import core.RequestHandler;
+import network.Request;
 import network.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,11 +13,19 @@ import java.util.concurrent.BlockingQueue;
 public class ProcessThread implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(ProcessThread.class);
 
-    private final BlockingQueue<Task> processQueue;
+    // private final BlockingQueue<Task> processQueue;
+    private final BlockingQueue<Request> processQueue;
     private final BlockingQueue<Response> responseQueue;
+
     private final RequestHandler requestHandler;
 
-    public ProcessThread(BlockingQueue<Task> processQueue, BlockingQueue<Response> responseQueue, RequestHandler requestHandler) {
+//    public ProcessThread(BlockingQueue<Task> processQueue, BlockingQueue<Response> responseQueue, RequestHandler requestHandler) {
+//        this.processQueue = processQueue;
+//        this.responseQueue = responseQueue;
+//        this.requestHandler = requestHandler;
+//    }
+
+    public ProcessThread(BlockingQueue<Request> processQueue, BlockingQueue<Response> responseQueue, RequestHandler requestHandler) {
         this.processQueue = processQueue;
         this.responseQueue = responseQueue;
         this.requestHandler = requestHandler;
@@ -26,11 +35,15 @@ public class ProcessThread implements Runnable {
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                Task task = processQueue.take();
+                // Task task = processQueue.take();
+                Request request = processQueue.take();
                 logger.debug("Поток {} берет задачу из очереди", Thread.currentThread().getName());
-                Response response = requestHandler.handle(task.request());
-                Response responseWithAddress = new Response.Builder(response).host(((InetSocketAddress) task.address()).getHostName())
-                        .port(((InetSocketAddress) task.address()).getPort()).build();
+
+                Response response = requestHandler.handle(request);
+//                Response responseWithAddress = new Response.Builder(response).host(((InetSocketAddress) task.address()).getHostName())
+//                        .port(((InetSocketAddress) task.address()).getPort()).build();
+                Response responseWithAddress = new Response.Builder(response).host(request.getHost())
+                        .port(request.getPort()).build();
 
                 responseQueue.put(responseWithAddress);
             } catch (InterruptedException e) {
