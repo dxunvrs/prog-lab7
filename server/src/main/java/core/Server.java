@@ -25,6 +25,7 @@ public class Server {
     private TCPConnectionManager connectionManager;
 
     private volatile boolean isWorking = true;
+    private volatile boolean isShuttingDown = false;
 
     // private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
     // private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
@@ -49,7 +50,8 @@ public class Server {
              )) {
 
             // connectionManager = new ConnectionManager(port);
-            connectionManager = new TCPConnectionManager("localhost", 8000);
+            connectionManager = new TCPConnectionManager(dotenv.get("GATEWAY_HOST"), Integer.parseInt(dotenv.get("GATEWAY_SERVER_PORT")),
+                    this::stop);
 
             DBManager dbManager = new DBManager(dbConnectionPool);
             CollectionManager collectionManager = new CollectionManager(dbManager);
@@ -71,7 +73,7 @@ public class Server {
             collectionManager.initCollection();
 
             startConsoleThread();
-            Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::serverShutdown));
 
             runMainLoop();
         } catch (SQLException e) {
@@ -97,11 +99,11 @@ public class Server {
                 logger.error("Не удалось создать задачу чтения", e);
                 isWorking = false;
                 Thread.currentThread().interrupt();
-            }
-            catch (IOException e) {
-                logger.error("Ошибка при работе с данными", e);
+            } catch (IOException e) {
+                logger.error("Ошибка", e);
             }
         }
+        serverShutdown();
     }
 
     private void startConsoleThread() {
@@ -111,7 +113,7 @@ public class Server {
                 if (scanner.hasNextLine()) {
                     String line = scanner.nextLine().trim();
                     if (line.equals("exit")) {
-                        System.exit(0);
+                        stop();
                     } else {
                         System.out.println("Сервер поддерживает только exit");
                     }
@@ -127,6 +129,14 @@ public class Server {
         isWorking = false;
 
         connectionManager.selectorWakeUp();
+    }
+
+    private void serverShutdown() {
+        if (isShuttingDown) {
+            return;
+        }
+        isShuttingDown = true;
+
         connectionManager.close();
 
         readPool.shutdownNow();

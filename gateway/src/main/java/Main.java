@@ -1,5 +1,8 @@
+import core.Gateway;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Это гейвейв");
+        Gateway gateway = new Gateway();
+        gateway.launch();
     }
 }

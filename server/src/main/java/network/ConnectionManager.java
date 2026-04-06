@@ -44,8 +44,6 @@ public class ConnectionManager implements AutoCloseable {
             readBuffer.clear();
             SocketAddress clientAddress = chan.receive(readBuffer);
 
-            if (clientAddress == null) return null;
-
             readBuffer.flip();
             byte[] bytes = new byte[readBuffer.remaining()];
             readBuffer.get(bytes);
@@ -67,7 +65,7 @@ public class ConnectionManager implements AutoCloseable {
     public void close() {
         logger.debug("Закрытие сетевых ресурсов");
         try {
-            if (selector != null && channel.isOpen()) selector.close();
+            if (selector != null && selector.isOpen()) selector.close();
             if (channel != null && channel.isOpen()) channel.close();
         } catch (IOException e) {
             logger.error("Ошибка при закрытии сетевых ресурсов", e);

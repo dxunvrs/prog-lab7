@@ -27,10 +27,13 @@ public class TCPConnectionManager implements AutoCloseable {
     private final String gatewayHost;
     private final int gatewayPort;
 
-    public TCPConnectionManager(String gatewayHost, int gatewayPort) throws IOException {
+    private final Runnable stopHook;
+
+    public TCPConnectionManager(String gatewayHost, int gatewayPort, Runnable stopHook) throws IOException {
         this.gatewayHost = gatewayHost;
         this.gatewayPort = gatewayPort;
         this.selector = Selector.open();
+        this.stopHook = stopHook;
 
         connect();
 
@@ -40,7 +43,7 @@ public class TCPConnectionManager implements AutoCloseable {
     public void connect() {
         try {
             if (reconnectAttempts >= MAX_ATTEMPTS) {
-                System.exit(0);
+                stopHook.run();
             }
             reconnectAttempts++;
 
@@ -65,7 +68,7 @@ public class TCPConnectionManager implements AutoCloseable {
             SelectionKey key = keys.next();
             keys.remove();
 
-            if (!key.isValid()) return null;
+            if (!key.isValid()) continue;
 
             if (key.isConnectable()) {
                 finishConnect(key);
@@ -150,7 +153,7 @@ public class TCPConnectionManager implements AutoCloseable {
                 if (buffer.hasRemaining()) {
                     return;
                 }
-                queue.remove();
+                queue.poll();
             }
             key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
         } catch (IOException e) {
@@ -181,7 +184,7 @@ public class TCPConnectionManager implements AutoCloseable {
     public void close() {
         logger.debug("Закрытие сетевых ресурсов");
         try {
-            if (selector != null && gatewayChannel.isOpen()) selector.close();
+            if (selector != null && selector.isOpen()) selector.close();
             if (gatewayChannel != null && gatewayChannel.isOpen()) gatewayChannel.close();
         } catch (IOException e) {
             logger.error("Ошибка при закрытии сетевых ресурсов", e);

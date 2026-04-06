@@ -13,6 +13,6 @@ dependencies {
 
 jar {
     manifest {
-        attributes["Main-Class"] = "core.EchoServer"
+        attributes["Main-Class"] = "Main"
     }
 }
