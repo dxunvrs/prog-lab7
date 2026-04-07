@@ -17,15 +17,15 @@ public class JWTProvider {
     private static final SecretKey key = Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
 
     public String createToken(String username, int userId) {
-        return Jwts.builder().setSubject(username).claim("userId", userId)
-                .setIssuedAt(new Date()).setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+        return Jwts.builder().subject(username).claim("userId", userId)
+                .issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
                 .compact();
     }
 
     public int validateToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             return claims.get("userId", Integer.class);
         } catch (Exception e){
             throw new AuthExpiredException("Пройдите авторизацию снова");

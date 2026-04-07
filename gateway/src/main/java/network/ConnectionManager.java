@@ -9,6 +9,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,14 +22,15 @@ public class ConnectionManager implements AutoCloseable {
     private final ServerSocketChannel tcpServerSocket;
 
     private final Map<SocketChannel, Queue<ByteBuffer>> serverQueue = new ConcurrentHashMap<>();
+    private final BlockingQueue<RawResponse> responseQueue;
 
     private final List<SocketChannel> servers = Collections.synchronizedList(new ArrayList<>());
     private final AtomicInteger roundRobinCounter = new AtomicInteger(0);
 
     private final ByteBuffer readBuffer = ByteBuffer.allocate(65535);
 
-    public ConnectionManager(int udpPort, int tcpPort) throws IOException {
-
+    public ConnectionManager(int udpPort, int tcpPort, BlockingQueue<RawResponse> responseQueue) throws IOException {
+        this.responseQueue = responseQueue;
         this.selector = Selector.open();
         this.udpChannel = DatagramChannel.open();
         udpChannel.configureBlocking(false);
@@ -94,7 +96,7 @@ public class ConnectionManager implements AutoCloseable {
         byte[] bytes = new byte[readBuffer.remaining()];
         readBuffer.get(bytes);
 
-        return new RawUDPRequest(clientAddress, bytes);
+        return new RawUDPRequest((InetSocketAddress) clientAddress, bytes);
     }
 
     public void clientSend(SocketAddress address, byte[] data) throws IOException {
@@ -102,7 +104,43 @@ public class ConnectionManager implements AutoCloseable {
     }
 
     private void serverRead(SelectionKey key) {
-        
+        SocketChannel serverChannel = (SocketChannel) key.channel();
+        ByteBuffer buffer = (ByteBuffer) key.attachment();
+        try {
+            int read = serverChannel.read(buffer);
+            if (read == -1) {
+                logger.debug("Соединение разорвано");
+                handleServerError(serverChannel, key);
+                return;
+            }
+            responseQueue.put(decode(buffer));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            logger.error("Ошибка при отправке на сервер", e);
+        }
+    }
+
+    private RawResponse decode(ByteBuffer buffer) {
+        buffer.flip();
+        if (buffer.remaining() < 4) {
+            buffer.compact();
+            return null;
+        }
+
+        buffer.mark();
+        int length = buffer.getInt();
+
+        if (buffer.remaining() < length) {
+            buffer.reset();
+            buffer.compact();
+            return null;
+        }
+
+        byte[] data = new byte[length];
+        buffer.get(data);
+        buffer.compact();
+        return new RawResponse(data);
     }
 
     private void serverWrite(SelectionKey key) {

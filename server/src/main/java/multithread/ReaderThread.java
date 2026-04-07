@@ -2,6 +2,7 @@ package multithread;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import network.RawTCPRequest;
 import network.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ public class ReaderThread implements Runnable {
 
 //    private final BlockingQueue<RawUDPRequest> requestQueue;
 //    private final BlockingQueue<Task> processQueue;
-    private final BlockingQueue<byte[]> requestQueue;
+    private final BlockingQueue<RawTCPRequest> requestQueue;
     private final BlockingQueue<Request> processQueue;
 
 //    public ReaderThread(BlockingQueue<RawUDPRequest> requestQueue, BlockingQueue<Task> processQueue) {
@@ -23,7 +24,7 @@ public class ReaderThread implements Runnable {
 //        this.processQueue = processQueue;
 //    }
 
-    public ReaderThread(BlockingQueue<byte[]> requestQueue, BlockingQueue<Request> processQueue) {
+    public ReaderThread(BlockingQueue<RawTCPRequest> requestQueue, BlockingQueue<Request> processQueue) {
         this.requestQueue = requestQueue;
         this.processQueue = processQueue;
     }
@@ -33,13 +34,13 @@ public class ReaderThread implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 // RawUDPRequest raw = requestQueue.take();
-                byte[] data = requestQueue.take();
+                RawTCPRequest raw = requestQueue.take();
                 logger.debug("Поток {} берет задачу чтения из очереди", Thread.currentThread().getName());
                 // Request request = mapper.readValue(raw.data(), Request.class);
-                Request request = mapper.readValue(data, Request.class);
+                Request request = mapper.readValue(raw.data(), Request.class);
                 // processQueue.put(new Task(request, raw.address()));
                 processQueue.put(request);
-                logger.info("Получен новый запрос, вес: {} байт, сообщение: {}", data.length, new String(data));
+                logger.info("Получен новый запрос, вес: {} байт, сообщение: {}", raw.data().length, new String(raw.data()));
             } catch (IOException e) {
                 logger.error("Ошибка парсинга запроса", e);
             } catch (InterruptedException e) {

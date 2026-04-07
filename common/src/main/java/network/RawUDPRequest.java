@@ -1,5 +1,5 @@
 package network;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 
-public record RawUDPRequest(SocketAddress address, byte[] data) {}
+public record RawUDPRequest(InetSocketAddress address, byte[] data) {}

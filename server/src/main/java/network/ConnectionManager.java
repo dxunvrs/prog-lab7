@@ -48,7 +48,7 @@ public class ConnectionManager implements AutoCloseable {
             byte[] bytes = new byte[readBuffer.remaining()];
             readBuffer.get(bytes);
 
-            return new RawUDPRequest(clientAddress, bytes);
+            return new RawUDPRequest((InetSocketAddress) clientAddress, bytes);
         }
         return null;
     }

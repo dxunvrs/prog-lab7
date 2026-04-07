@@ -1,9 +1,11 @@
 package core;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import multithread.ReaderThread;
+import multithread.SenderThread;
 import network.ConnectionManager;
+import network.RawResponse;
 import network.RawUDPRequest;
-import network.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,18 +26,24 @@ public class Gateway {
     private ConnectionManager connectionManager;
 
     private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
-    private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<RawResponse> responseQueue = new LinkedBlockingQueue<>(10);
 
     private final ForkJoinPool readPool = new ForkJoinPool();
     private final ForkJoinPool sendPool = new ForkJoinPool();
 
-
     public void launch() {
         try {
             connectionManager = new ConnectionManager(Integer.parseInt(dotenv.get("GATEWAY_CLIENT_PORT")),
-                    Integer.parseInt(dotenv.get("GATEWAY_SERVER_PORT"))
-                    );
+                    Integer.parseInt(dotenv.get("GATEWAY_SERVER_PORT")),
+                    responseQueue);
 
+            // инициализируем потоки-воркеры
+            for (int i = 0; i < 10; i++) {
+                readPool.execute(new ReaderThread(requestQueue, connectionManager));
+            }
+            for (int i = 0; i < 10; i++) {
+                sendPool.execute(new SenderThread(responseQueue, connectionManager));
+            }
 
             startConsoleThread();
             Runtime.getRuntime().addShutdownHook(new Thread(this::gatewayShutdown));
@@ -52,6 +60,7 @@ public class Gateway {
         while (isWorking) {
             try {
                 RawUDPRequest raw = connectionManager.receive();
+                if (raw == null) continue;
 
                 requestQueue.put(raw);
 

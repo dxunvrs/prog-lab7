@@ -60,7 +60,7 @@ public class TCPConnectionManager implements AutoCloseable {
         }
     }
 
-    public byte[] receive() throws IOException {
+    public RawTCPRequest receive() throws IOException {
         if (selector.select() == 0) return null;
 
         Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -97,7 +97,7 @@ public class TCPConnectionManager implements AutoCloseable {
         }
     }
 
-    private byte[] read(SelectionKey key) {
+    private RawTCPRequest read(SelectionKey key) {
         ByteBuffer buffer = (ByteBuffer) key.attachment();
         try {
             int read = gatewayChannel.read(buffer);
@@ -114,7 +114,7 @@ public class TCPConnectionManager implements AutoCloseable {
         }
     }
 
-    private byte[] decode(ByteBuffer buffer) {
+    private RawTCPRequest decode(ByteBuffer buffer) {
         buffer.flip();
         if (buffer.remaining() < 4) {
             buffer.compact();
@@ -133,7 +133,7 @@ public class TCPConnectionManager implements AutoCloseable {
         byte[] data = new byte[length];
         buffer.get(data);
         buffer.compact();
-        return data;
+        return new RawTCPRequest(data);
     }
 
     public void send(ByteBuffer buffer) throws IOException {

@@ -31,7 +31,7 @@ public class Server {
     // private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
     // private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
 
-    private final BlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<RawTCPRequest> requestQueue = new LinkedBlockingQueue<>(10);
     private final BlockingQueue<Request> processQueue = new LinkedBlockingQueue<>(10);
     private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
 
@@ -90,7 +90,7 @@ public class Server {
         while (isWorking) {
             try {
                 // RawUDPRequest raw = connectionManager.receive();
-                byte[] data = connectionManager.receive();
+                RawTCPRequest data = connectionManager.receive();
                 if (data == null) continue;
 
                 requestQueue.put(data);
