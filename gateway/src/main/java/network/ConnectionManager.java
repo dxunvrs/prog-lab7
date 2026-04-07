@@ -56,7 +56,7 @@ public class ConnectionManager implements AutoCloseable {
             if (!key.isValid()) continue;
 
             if (key.isAcceptable()) {
-                serverAccept(key);
+                serverAccept();
                 return null;
             }
             if (key.isReadable()) {
@@ -75,7 +75,7 @@ public class ConnectionManager implements AutoCloseable {
         return null;
     }
 
-    private void serverAccept(SelectionKey key) {
+    private void serverAccept() {
         try {
             SocketChannel serverChannel = tcpServerSocket.accept();
             serverChannel.configureBlocking(false);
@@ -113,7 +113,7 @@ public class ConnectionManager implements AutoCloseable {
                 handleServerError(serverChannel, key);
                 return;
             }
-            responseQueue.put(decode(buffer));
+            responseQueue.put(Objects.requireNonNull(decode(buffer)));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
@@ -189,7 +189,6 @@ public class ConnectionManager implements AutoCloseable {
         selector.wakeup();
     }
 
-    @Deprecated // вынести в логику потока
     private void retryToAnotherServer(ByteBuffer buffer) {
         buffer.rewind();
 
@@ -205,7 +204,6 @@ public class ConnectionManager implements AutoCloseable {
         }
     }
 
-    @Deprecated // вынести в логику потока
     private void handleServerError(SocketChannel serverChannel, SelectionKey key) {
         try {
             logger.debug("Очистка от сервера {}", serverChannel.getRemoteAddress());
