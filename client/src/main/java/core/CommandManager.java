@@ -1,7 +1,6 @@
 package core;
 
 import commands.*;
-import exceptions.EndOfExecutionException;
 import exceptions.InvalidArgumentException;
 import exceptions.InvalidAuthorizeException;
 import exceptions.ScriptExecutionException;

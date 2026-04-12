@@ -1,5 +1,6 @@
 package multithread;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import network.*;
@@ -52,6 +53,8 @@ public class ReaderThread implements Runnable {
                 buffer.flip();
                 connectionManager.serverSend(currentServer, buffer);
                 logger.info("Запрос перенаправлен на {}", currentServer.getRemoteAddress());
+            } catch (JsonProcessingException e) {
+                logger.error("Ошибка маппинга", e);
             } catch (IOException e) {
                 logger.error("Ошибка парсинга запроса", e);
             } catch (InterruptedException e) {

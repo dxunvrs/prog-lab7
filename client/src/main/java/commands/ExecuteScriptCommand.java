@@ -1,8 +1,8 @@
 package commands;
 
 import exceptions.InvalidArgumentException;
-import io.InputManager;
 import exceptions.ScriptExecutionException;
+import io.InputManager;
 
 import java.io.IOException;
 

@@ -67,7 +67,7 @@ public class DBManager {
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
                         product.setId(resultSet.getInt("id"));
-                        product.setCreationDate(resultSet.getDate("creation_date"));
+                        product.setCreationDate(resultSet.getTimestamp("creation_date"));
                         product.setUserId(userId);
                     }
                     logger.info("В БД добавлен продукт {}", product);
@@ -190,7 +190,7 @@ public class DBManager {
         String name = resultSet.getString("name");
         long x = resultSet.getLong("x");
         int y = resultSet.getInt("y");
-        Date creationDate = resultSet.getDate("creation_date");
+        java.util.Date creationDate = resultSet.getTimestamp("creation_date");
         int price = resultSet.getInt("price");
         String unitOfMeasureString = resultSet.getString("unit_of_measure");
         UnitOfMeasure unitOfMeasure = UnitOfMeasure.valueOf(unitOfMeasureString);

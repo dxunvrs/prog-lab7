@@ -48,9 +48,10 @@ public class InputManager {
         logger.info("В очередь добавлен новый скрипт {}", fileName);
     }
 
-    public String readNextLine(String prompt, Set<String> suggestions, boolean isCommandMode) {
+    private String readNextLine(String prompt, Set<String> suggestions, boolean isCommandMode, boolean isHidden) {
         Objects.requireNonNull(sourceDeque.peekFirst()).reader.setSuggestions(suggestions);
         Objects.requireNonNull(sourceDeque.peekFirst()).reader.setCommandMode(isCommandMode);
+        Objects.requireNonNull(sourceDeque.peekFirst()).reader.setIsHidden(isHidden);
 
         while (!sourceDeque.isEmpty()) {
             ScriptSource currentSource = sourceDeque.peek();
@@ -74,12 +75,16 @@ public class InputManager {
         throw new EndOfInputException("Чтение из пустой очереди");
     }
 
-    public String readNextLine(String prompt, Set<String> suggestions) { // data
-        return readNextLine(prompt, suggestions, false);
+    public String readData(String prompt, Set<String> suggestions) {
+        return readNextLine(prompt, suggestions, false, false);
     }
 
-    public String readNextLine(String prompt, boolean isCommandMode) { // commands
-        return readNextLine(prompt, null, isCommandMode);
+    public String readCommand(String prompt) {
+        return readNextLine(prompt, null, true, false);
+    }
+
+    public String readPassword(String prompt) {
+        return readNextLine(prompt, null, false, true);
     }
 
     public boolean isScriptMode() {

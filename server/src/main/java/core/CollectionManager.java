@@ -1,10 +1,10 @@
 package core;
 
+import db.DBManager;
 import exceptions.CommandExecutionException;
 import exceptions.DBExecuteException;
 import exceptions.IdNotFoundException;
 import models.Product;
-import db.DBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,6 @@ public class CollectionManager {
         lock.lock();
         try {
             collection = dbManager.loadCollection();
-            logger.info("Коллекция проинициализирована");
         } finally {
             lock.unlock();
         }
@@ -107,12 +106,12 @@ public class CollectionManager {
     }
 
     public void clearCollection(int userId) {
-        if (!dbManager.clearProducts(userId)) throw new CommandExecutionException("Не удалось очистить коллекцию");
+        if (!dbManager.clearProducts(userId)) throw new CommandExecutionException("Ваша коллекция уже пуста");
 
         lock.lock();
         try {
-            collection.clear();
-            logger.info("Коллекция очищена");
+            collection.removeIf(product -> product.getUserId() == userId);
+            logger.info("Коллекция пользователя {} очищена", userId);
         } finally {
             lock.unlock();
         }

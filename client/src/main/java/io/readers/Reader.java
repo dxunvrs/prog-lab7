@@ -8,4 +8,5 @@ public interface Reader {
     void close();
     default void setSuggestions(Set<String> suggestions) {}
     default void setCommandMode(boolean mode) {}
+    default void setIsHidden(boolean isHidden) {}
 }

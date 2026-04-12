@@ -24,7 +24,7 @@ public class AuthClient {
     }
 
     public boolean authorize() {
-        String line = inputManager.readNextLine("> ", Set.of("login", "register", "exit"), false);
+        String line = inputManager.readData("> ", Set.of("login", "register", "exit"));
         String formattedLine = line.trim().replaceAll("\\s+", " ");
 
         switch (formattedLine) {
@@ -43,8 +43,8 @@ public class AuthClient {
     }
 
     private boolean processLogin() {
-        String username = inputManager.readNextLine("Введите имя пользователя: ", false).trim();
-        String password = inputManager.readNextLine("Введите пароль: ", false).trim();
+        String username = inputManager.readData("Введите имя пользователя: ", null).trim();
+        String password = inputManager.readPassword("Введите пароль: ").trim();
 
         Request request = new Request.Builder().type(RequestType.LOGIN).username(username).password(password).build();
 
@@ -59,9 +59,9 @@ public class AuthClient {
     }
 
     private boolean processRegister() {
-        String username = inputManager.readNextLine("Введите имя пользователя: ", false).trim();
-        String password = inputManager.readNextLine("Введите пароль: ", false).trim();
-        String repeatPassword = inputManager.readNextLine("Повторите введенный пароль: ", false).trim();
+        String username = inputManager.readData("Введите имя пользователя: ", null).trim();
+        String password = inputManager.readPassword("Введите пароль: ").trim();
+        String repeatPassword = inputManager.readPassword("Повторите введенный пароль: ").trim();
 
         if (!Objects.equals(password, repeatPassword)) {
             System.out.println("Пароли не совпадают");

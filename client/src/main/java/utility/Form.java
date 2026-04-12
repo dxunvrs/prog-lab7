@@ -1,9 +1,9 @@
 package utility;
 
-import io.InputManager;
 import exceptions.EndOfInputException;
 import exceptions.ScriptExecutionException;
 import exceptions.TypeNotFoundException;
+import io.InputManager;
 import models.UnitOfMeasure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class Form {
         while (true) {
             try {
                 logger.info("У пользователя запрашивается {} типа {}", name, type.getSimpleName());
-                result = map(type, inputManager.readNextLine("Введите " + name + ": ", getSuggestions(type)).trim());
+                result = map(type, inputManager.readData("Введите " + name + ": ", getSuggestions(type)).trim());
                 if (validator.validate(result)) {
                     if (scriptMode) System.out.println(result);
                     break;

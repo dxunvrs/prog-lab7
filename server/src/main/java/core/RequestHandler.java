@@ -1,5 +1,6 @@
 package core;
 
+import auth.AuthService;
 import commands.CommandContext;
 import exceptions.AuthExpiredException;
 import exceptions.InvalidAuthorizeException;
@@ -8,7 +9,6 @@ import network.Response;
 import network.ResponseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import auth.AuthService;
 
 public class RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);

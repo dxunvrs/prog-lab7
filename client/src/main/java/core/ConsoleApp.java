@@ -4,7 +4,7 @@ import exceptions.EndOfExecutionException;
 import exceptions.EndOfInputException;
 import exceptions.InvalidAuthorizeException;
 import io.InputManager;
-import network.*;
+import network.ConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utility.AuthClient;
@@ -71,7 +71,7 @@ public class ConsoleApp {
     }
 
     private void interactive() {
-        String line = inputManager.readNextLine("> ", true);
+        String line = inputManager.readCommand("> ");
         String formattedLine = line.trim().replaceAll("\\s+", " ");
 
         if (inputManager.isScriptMode()) System.out.println(formattedLine); // для режима скрипта

@@ -32,6 +32,7 @@ public class CommandManager {
         }
         try {
             logger.debug("Выполнение команды {}", command.getName());
+            collectionManager.initCollection(); // полнейший костыль
             CommandData commandData = command.execute(commandContext);
             return new Response.Builder().type(ResponseType.OK).message(commandData.message()).build();
         } catch (IdNotFoundException | CommandExecutionException e) {

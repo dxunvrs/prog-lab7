@@ -5,9 +5,7 @@ import network.Request;
 import network.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utility.Task;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 
 public class ProcessThread implements Runnable {

@@ -18,6 +18,7 @@ public class ConsoleReader implements Reader {
     private final Terminal terminal;
     private Set<String> suggestions; // список подсказок
     private boolean isCommandMode = false;
+    private boolean isHidden = false;
 
     public ConsoleReader(Supplier<Set<String>> commandsSupplier) throws IOException {
         terminal = TerminalBuilder.builder().system(true).build();
@@ -75,6 +76,9 @@ public class ConsoleReader implements Reader {
     }
 
     @Override
+    public void setIsHidden(boolean isHidden) { this.isHidden = isHidden; }
+
+    @Override
     public boolean hasNextLine() {
         return true;
     }
@@ -82,6 +86,9 @@ public class ConsoleReader implements Reader {
     @Override
     public String nextLine(String prompt) {
         try {
+            if (isHidden) {
+                return reader.readLine(prompt, '\0');
+            }
             return reader.readLine(prompt);
         } catch (EndOfFileException | UserInterruptException e) {
             return null;
