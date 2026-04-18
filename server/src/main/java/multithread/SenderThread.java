@@ -16,13 +16,7 @@ public class SenderThread implements Runnable {
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private final BlockingQueue<Response> responseQueue;
-    // private final ConnectionManager connectionManager;
     private final TCPConnectionManager connectionManager;
-
-//    public SenderThread(BlockingQueue<Response> responseQueue, ConnectionManager connectionManager) {
-//        this.responseQueue = responseQueue;
-//        this.connectionManager = connectionManager;
-//    }
 
     public SenderThread(BlockingQueue<Response> responseQueue, TCPConnectionManager connectionManager) {
         this.responseQueue = responseQueue;
@@ -42,9 +36,6 @@ public class SenderThread implements Runnable {
                 buffer.put(responseBytes);
                 buffer.flip();
 
-
-//                SocketAddress address = new InetSocketAddress(response.getHost(), response.getPort());
-//                connectionManager.send(address, responseBytes);
                 connectionManager.send(buffer);
                 logger.info("Отправлен ответ, вес: {} байт, сообщение: {}", responseBytes.length, new String(responseBytes));
             } catch (IOException e) {

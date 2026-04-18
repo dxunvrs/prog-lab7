@@ -23,16 +23,11 @@ public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
-    // private final int port;
-    // private ConnectionManager connectionManager;
     private TCPConnectionManager connectionManager;
 
     private volatile boolean isWorking = true;
     private volatile boolean isShuttingDown = false;
 
-    // private final BlockingQueue<RawUDPRequest> requestQueue = new LinkedBlockingQueue<>(10);
-    // private final BlockingQueue<Task> processQueue = new LinkedBlockingQueue<>(10);
-    // private final BlockingQueue<Response> responseQueue = new LinkedBlockingQueue<>(10);
 
     private final BlockingQueue<RawTCPRequest> requestQueue = new LinkedBlockingQueue<>(10);
     private final BlockingQueue<Request> processQueue = new LinkedBlockingQueue<>(10);
@@ -42,9 +37,6 @@ public class Server {
     private final ForkJoinPool processPool = new ForkJoinPool();
     private final ForkJoinPool sendPool = new ForkJoinPool();
 
-//    public Server(int port) {
-//        this.port = port;
-//    }
 
     public void launch() {
         try (DBConnectionPool dbConnectionPool = new DBConnectionPool(
@@ -52,7 +44,6 @@ public class Server {
                      dotenv.get("DB_USER"), dotenv.get("DB_PASS")
              )) {
 
-            // connectionManager = new ConnectionManager(port);
             connectionManager = new TCPConnectionManager(dotenv.get("GATEWAY_HOST"), Integer.parseInt(dotenv.get("GATEWAY_SERVER_PORT")),
                     this::stop);
 
@@ -87,12 +78,10 @@ public class Server {
     }
 
     private void runMainLoop() {
-        // System.out.println("Сервер запущен на порту " + port);
         logger.info("Сервер запущен");
 
         while (isWorking) {
             try {
-                // RawUDPRequest raw = connectionManager.receive();
                 RawTCPRequest data = connectionManager.receive();
                 if (data == null) continue;
 

@@ -40,10 +40,11 @@ public class ReaderThread implements Runnable {
                 SocketChannel currentServer = connectionManager.getNextServer();
                 if (currentServer == null) {
                     logger.error("Нет доступных серверов");
-                    connectionManager.clientSend(clientAddress,
-                            mapper.writeValueAsBytes(new Response.Builder().
+                    connectionManager.clientSend(new ResponsePacket(
+                            clientAddress, mapper.writeValueAsBytes(new Response.Builder().
                                     type(ResponseType.ERROR).
-                                    message("Нет доступных серверов").build()));
+                                    message("Нет доступных серверов").build())
+                    ));
                     return;
                 }
                 byte[] requestBytes = mapper.writeValueAsBytes(requestWithAddress);
