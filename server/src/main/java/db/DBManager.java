@@ -54,13 +54,13 @@ public class DBManager {
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, creation_date";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, product.getName());
-                statement.setLong(2, product.getCoordinates().x());
-                statement.setInt(3, product.getCoordinates().y());
+                statement.setLong(2, product.getCoordinates().getX());
+                statement.setInt(3, product.getCoordinates().getY());
                 statement.setInt(4, product.getPrice());
                 statement.setObject(5, product.getUnitOfMeasure(), Types.OTHER);
-                statement.setString(6, product.getOwner().name());
-                statement.setDate(7, Date.valueOf(product.getOwner().birthday()));
-                statement.setLong(8, product.getOwner().height());
+                statement.setString(6, product.getOwner().getName());
+                statement.setDate(7, Date.valueOf(product.getOwner().getBirthday()));
+                statement.setLong(8, product.getOwner().getHeight());
 
                 statement.setInt(9, userId);
 
@@ -95,13 +95,13 @@ public class DBManager {
                     "WHERE id = ? AND user_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, product.getName());
-                statement.setLong(2, product.getCoordinates().x());
-                statement.setInt(3, product.getCoordinates().y());
+                statement.setLong(2, product.getCoordinates().getX());
+                statement.setInt(3, product.getCoordinates().getY());
                 statement.setInt(4, product.getPrice());
                 statement.setObject(5, product.getUnitOfMeasure(), Types.OTHER);
-                statement.setString(6, product.getOwner().name());
-                statement.setDate(7, Date.valueOf(product.getOwner().birthday()));
-                statement.setLong(8, product.getOwner().height());
+                statement.setString(6, product.getOwner().getName());
+                statement.setDate(7, Date.valueOf(product.getOwner().getBirthday()));
+                statement.setLong(8, product.getOwner().getHeight());
 
                 statement.setInt(9, id);
                 statement.setInt(10, userId);

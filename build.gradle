@@ -11,6 +11,9 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven {
+            url "https://maven.dxunvrs.ru/releases"
+        }
     }
 
     dependencies {
@@ -19,5 +22,6 @@ subprojects {
         implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:latest.release'
         implementation 'org.slf4j:slf4j-api:2.0.17'
         implementation 'ch.qos.logback:logback-classic:latest.release'
+        implementation 'com.dxunvrs:common:1.4'
     }
 }

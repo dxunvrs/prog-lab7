@@ -34,7 +34,7 @@ public class CommandManager {
             logger.debug("Выполнение команды {}", command.getName());
             collectionManager.initCollection(); // полнейший костыль
             CommandData commandData = command.execute(commandContext);
-            return new Response.Builder().type(ResponseType.OK).message(commandData.message()).build();
+            return new Response.Builder().type(ResponseType.OK).message(commandData.message()).products(commandData.products()).build();
         } catch (IdNotFoundException | CommandExecutionException e) {
             return handleError(e.getMessage(), e);
         } catch (Exception e) {
@@ -102,5 +102,6 @@ public class CommandManager {
         addCommand(new SortCommand());
         addCommand(new SumOfPriceCommand());
         addCommand(new UpdateCommand());
+        addCommand(new GShowCommand());
     }
 }

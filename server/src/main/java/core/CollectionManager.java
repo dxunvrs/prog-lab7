@@ -150,6 +150,10 @@ public class CollectionManager {
         }
     }
 
+    public List<Product> getCollection() {
+        return collection;
+    }
+
     public String getCollectionInfo() {
         lock.lock();
         try {
